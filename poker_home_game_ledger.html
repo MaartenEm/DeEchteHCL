@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Night Ledger &bull; Live Multi-Device Table</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- QRCode generation library for quick phone scanning -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            felt: {
+              950: '#040d07',
+              900: '#07180f',
+              800: '#0c2417',
+              700: '#143825',
+              600: '#1a4730',
+              500: '#23593d',
+            },
+            gold: {
+              300: '#fde047',
+              400: '#f5c35f',
+              500: '#e5aa38',
+              600: '#c48924'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Cinzel', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #040906;
+      color: #f3f4f6;
+    }
+    .felt-pattern {
+      background-color: #05100a;
+      background-image: radial-gradient(rgba(35, 89, 61, 0.45) 1px, transparent 0);
+      background-size: 22px 22px;
+    }
+    @keyframes pulse-live {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.03); opacity: 0.85; }
+    }
+    .live-pulse {
+      animation: pulse-live 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="felt-pattern min-h-screen font-sans flex flex-col justify-between selection:bg-gold-500 selection:text-black">
+
+  <header class="border-b border-felt-700/80 bg-black/80 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Logo & App Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-600 via-gold-400 to-amber-200 p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 flex-shrink-0">
+          <div class="w-full h-full bg-felt-900 rounded-full flex items-center justify-center text-gold-400 text-lg font-serif">
+            ♠
+          </div>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-2xl font-bold font-serif tracking-wider text-amber-100 flex items-center gap-2">
+            HIGH ROLLER <span class="text-[10px] tracking-normal font-sans font-bold bg-felt-600 border border-felt-500 text-emerald-300 px-2 py-0.5 rounded-full">LIVE SYNC</span>
+          </h1>
+          <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
+            <span id="syncStatusIndicator" class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="syncStatusText">Connecting...</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Live Room Action & Code -->
+      <div class="flex items-center gap-2 bg-felt-900 border border-felt-700 p-1.5 rounded-xl shadow-inner">
+        <div class="px-2 py-1 text-xs">
+          <span class="text-gray-400 text-[10px] block uppercase font-bold">Room Code</span>
+          <span id="currentRoomCodeLabel" class="font-mono font-bold text-gold-400 text-sm tracking-widest cursor-pointer hover:underline" title="Click to copy link">TABLE-1</span>
+        </div>
+        <button id="openShareModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-emerald-300 flex items-center gap-1 transition" title="Show QR Code & Invite Link">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+          <span class="hidden sm:inline">Invite</span>
+        </button>
+        <button id="openRoomModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-gray-300 transition" title="Switch or Create Room">
+          Switch Table
+        </button>
+      </div>
+
+      <!-- Navigation Tabs (Current Game vs All-Time Records) -->
+      <div class="flex items-center bg-felt-900 border border-felt-700 p-1 rounded-xl shadow-inner">
+        <button id="tabGameBtn" onclick="switchTab('game')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow">
+          <span>♠️</span>
+          <span>Table</span>
+        </button>
+        <button id="tabRecordsBtn" onclick="switchTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
+          <span>🏆</span>
+          <span>All-Time Records</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6 flex-grow">
+
+    <!-- VIEW 1: ACTIVE CURRENT GAME -->
+    <div id="viewCurrentGame" class="space-y-6">
+
+      <!-- Balance & Integrity Banner (Total Buy-in = Cashouts + Rake) -->
+      <div id="integrityBanner" class="p-4 sm:p-5 rounded-xl border transition-all duration-300 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Host Controls: Rake & House Fee Configuration Bar -->
+      <div class="bg-felt-900/90 border border-gold-500/30 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg">
+            🏦
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake / Kitty / Food & Drink Fee</h3>
+              <span id="rakeStatusBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400">1€ / Person</span>
+            </div>
+            <p class="text-xs text-gray-400">Deducts table fee per player automatically. Integrity formula checks: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <!-- Toggle Rake -->
+          <label class="flex items-center cursor-pointer select-none">
+            <input type="checkbox" id="rakeToggle" class="sr-only peer">
+            <div class="w-10 h-6 bg-felt-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500 relative border border-felt-600"></div>
+            <span class="ml-2 text-xs font-semibold text-gray-300">Enable Fee</span>
+          </label>
+
+          <!-- Rake Per Person Input -->
+          <div id="rakeInputsContainer" class="flex items-center gap-2">
+            <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
+              <span class="text-gray-400 mr-1.5">Fee / Player:</span>
+              <span class="text-gold-400 font-semibold currencySymbol">€</span>
+              <input type="number" id="rakePerPersonInput" min="0" step="0.5" value="1" class="w-12 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
+            </div>
+
+            <!-- Collector Select -->
+            <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2 py-1 text-xs">
+              <span class="text-gray-400 mr-1.5">Collector:</span>
+              <select id="rakeCollectorSelect" class="bg-felt-700 text-gold-300 font-semibold rounded px-1.5 py-0.5 focus:outline-none">
+                <option value="KITTY">Separate Kitty / Pot</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Session Live Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
+          <span class="text-xs uppercase tracking-wider text-emerald-400/80 font-semibold mb-1">Total Buy-ins</span>
+          <div class="text-xl sm:text-2xl font-bold text-amber-200" id="statTotalBuyin">€0</div>
+          <span class="text-[11px] text-gray-400 mt-1" id="statPlayerCount">0 players seated</span>
+        </div>
+
+        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
+          <span class="text-xs uppercase tracking-wider text-blue-400/80 font-semibold mb-1">Total Cash-outs</span>
+          <div class="text-xl sm:text-2xl font-bold text-blue-200" id="statTotalCashout">€0</div>
+          <span class="text-[11px] text-gray-400 mt-1" id="statCashedCount">0 stacks verified</span>
+        </div>
+
+        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
+          <span class="text-xs uppercase tracking-wider text-amber-400/80 font-semibold mb-1">Rake / Kitty</span>
+          <div class="text-xl sm:text-2xl font-bold text-gold-400" id="statTotalRake">€0</div>
+          <span class="text-[11px] text-gray-400 mt-1" id="statRakeCollectorDesc">Disabled</span>
+        </div>
+
+        <!-- Live Session: Biggest Winner -->
+        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
+          <span class="text-xs uppercase tracking-wider text-gold-400 font-semibold mb-1">Biggest Winner</span>
+          <div class="text-xl sm:text-2xl font-bold text-emerald-400 truncate" id="statTopWinner">-</div>
+          <span class="text-[11px] text-gray-400 mt-1" id="statTopWinnerAmt">+€0</span>
+        </div>
+
+        <!-- Live Session: Biggest Loser -->
+        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col col-span-2 lg:col-span-1">
+          <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold mb-1">Biggest Loser</span>
+          <div class="text-xl sm:text-2xl font-bold text-rose-400 truncate" id="statTopLoser">-</div>
+          <span class="text-[11px] text-gray-400 mt-1" id="statTopLoserAmt">-€0</span>
+        </div>
+      </div>
+
+      <!-- Players Roster Header -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-felt-800/70 p-4 rounded-xl border border-felt-700">
+        <div class="flex items-center space-x-2">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>Live Table Players</span>
+          </h2>
+          <span id="playerBadgeCount" class="bg-felt-600 text-xs text-amber-300 font-bold px-2 py-0.5 rounded-full border border-felt-500">0</span>
+          <span id="myClaimedBadge" class="hidden text-xs bg-emerald-950 text-emerald-300 border border-emerald-600 px-2 py-0.5 rounded-full"></span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center bg-felt-900/90 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
+            <span class="text-gray-400 mr-2">Default Buy-in:</span>
+            <span class="text-gold-400 font-semibold currencySymbol">€</span>
+            <input type="number" id="defaultBuyinInput" min="1" value="20" class="w-16 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
+          </div>
+
+          <button id="addPlayerBtn" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white font-semibold rounded-lg text-sm shadow-md transition flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Add Player
+          </button>
+        </div>
+      </div>
+
+      <!-- Player cards grid container -->
+      <div id="playersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Greedy Debt Settlement & Export Section -->
+      <section class="bg-felt-900/95 border border-felt-700 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-felt-700/80">
+          <div>
+            <h2 class="text-xl font-bold font-serif text-amber-200 flex items-center gap-2">
+              <span>🎲 Who Pays Whom</span>
+              <span class="text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full">
+                Optimal Settlement
+              </span>
+            </h2>
+            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transactions so losers pay winners directly & routes rake/kitty.</p>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button id="copySummaryBtn" class="w-full sm:w-auto px-4 py-2 bg-felt-700 hover:bg-felt-600 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 border border-felt-500 transition shadow">
+              <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              <span id="copySummaryText">Copy for Chat</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Settlement Transactions Display -->
+        <div id="settlementList" class="mt-5 space-y-2.5">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+    </div>
+
+    <!-- VIEW 2: DEDICATED ALL-TIME RECORDS TAB (Nameless & No Biggest Win) -->
+    <div id="viewAllTimeRecords" class="hidden space-y-6">
+      <div class="bg-gradient-to-r from-felt-950 via-felt-900 to-felt-950 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-gold-500/20 gap-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
+              🏆
+            </div>
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">ALL-TIME RECORDS</h2>
+              <p class="text-xs text-gray-400">Anonymous home game benchmarks across all recorded sessions</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="allTimeGamesBadge" class="text-xs bg-gold-500/10 text-gold-300 border border-gold-500/30 px-3 py-1 rounded-full font-semibold">0 Sessions Logged</span>
+            <button onclick="archiveCurrentSession()" class="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-600/70 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+              Settle & Archive Game
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 Primary Anonymous Records: Biggest Buy-in & Biggest Loss -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          
+          <!-- Anonymous Biggest Buy-in Ever Card -->
+          <div class="bg-felt-900/90 border border-gold-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 text-2xl">
+                  💰
+                </div>
+                <div>
+                  <span class="text-xs uppercase tracking-wider text-amber-300 font-bold block">Biggest Buy-in Ever</span>
+                  <span class="text-xs text-gray-400">Single player cumulative buy-in in one night</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="py-2">
+              <div id="hofBiggestBuyinAmt" class="text-3xl sm:text-4xl font-mono font-bold text-gold-400 tracking-tight">€0.00</div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-felt-800 flex items-center justify-between text-xs text-gray-400">
+              <span>Record Log:</span>
+              <span id="hofBiggestBuyinDate" class="font-medium text-gray-300">-</span>
+            </div>
+          </div>
+
+          <!-- Anonymous Biggest Loss Ever Card -->
+          <div class="bg-felt-900/90 border border-rose-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-300 text-2xl">
+                  🩸
+                </div>
+                <div>
+                  <span class="text-xs uppercase tracking-wider text-rose-300 font-bold block">Biggest Loss Ever</span>
+                  <span class="text-xs text-gray-400">Single session maximum net deficit</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="py-2">
+              <div id="hofBiggestLossAmt" class="text-3xl sm:text-4xl font-mono font-bold text-rose-400 tracking-tight">-€0.00</div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-felt-800 flex items-center justify-between text-xs text-gray-400">
+              <span>Record Log:</span>
+              <span id="hofBiggestLossDate" class="font-medium text-gray-300">-</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Manual Adjustments Section -->
+        <div class="bg-felt-950/60 border border-felt-800 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">Manual Record Calibration</h3>
+            <span class="text-xs text-gray-400">Synchronized across cloud table</span>
+          </div>
+
+          <form id="hofForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
+              <label class="text-xs text-amber-300 font-bold block">Biggest Buy-in Amount (<span class="currencySymbol">€</span>)</label>
+              <input type="number" step="any" min="0" id="hofInputBuyinAmt" class="w-full bg-felt-800 border border-felt-600 rounded px-3 py-2 text-sm text-gold-400 font-bold font-mono">
+              <input type="text" id="hofInputBuyinDate" placeholder="Date / Note (e.g. Oct 2026)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
+            </div>
+
+            <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
+              <label class="text-xs text-rose-300 font-bold block">Biggest Loss Amount (<span class="currencySymbol">€</span>)</label>
+              <input type="number" step="any" min="0" id="hofInputLossAmt" class="w-full bg-felt-800 border border-felt-600 rounded px-3 py-2 text-sm text-rose-400 font-bold font-mono">
+              <input type="text" id="hofInputLossDate" placeholder="Date / Note (e.g. Session #4)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
+            </div>
+
+            <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button type="button" onclick="resetAllTimeRecords()" class="px-3 py-2 bg-red-950/70 hover:bg-red-900 text-red-300 rounded-lg text-xs font-semibold border border-red-800/80 transition">
+                Reset Records to Zero
+              </button>
+              <button type="submit" class="px-5 py-2 bg-gold-600 hover:bg-gold-500 text-black rounded-lg text-xs font-bold transition shadow">
+                Save Records
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer with Connection indicator -->
+  <footer class="border-t border-felt-800/80 bg-black/60 text-center py-3 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-center gap-2">
+    <span>Poker Night Live Ledger</span>
+    <span class="hidden sm:inline">&bull;</span>
+    <span id="footerSyncModeText">Multi-Device Cloud Mode</span>
+    <span class="hidden sm:inline">&bull;</span>
+    <span id="footerUserId">User: Anonymous</span>
+  </footer>
+
+  <!-- Modal: Add or Edit Player -->
+  <div id="playerModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-felt-900 border border-felt-600 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+      <button onclick="closeModal('playerModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      <h3 id="modalTitle" class="text-xl font-bold font-serif text-amber-200 mb-4">Add New Player</h3>
+
+      <form id="playerForm" class="space-y-4">
+        <input type="hidden" id="modalPlayerId">
+        
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Player Name</label>
+          <input type="text" id="modalPlayerName" required placeholder="e.g. Mike" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Avatar Color Theme</label>
+          <div class="flex items-center gap-3" id="colorPickerGroup">
+            <!-- Colors radio buttons generated via script -->
+          </div>
+        </div>
+
+        <div id="modalBuyinGroup">
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Initial Buy-in (<span class="currencySymbol">€</span>)</label>
+          <input type="number" id="modalInitialBuyin" min="0" step="any" required class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="closeModal('playerModal')" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-sm font-semibold transition border border-felt-600">Cancel</button>
+          <button type="submit" id="savePlayerSubmitBtn" class="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white rounded-lg text-sm font-semibold transition shadow">Save Player</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Share Table / QR Code -->
+  <div id="shareModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+      <button onclick="closeModal('shareModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      
+      <div class="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 text-2xl mx-auto mb-3">
+        📲
+      </div>
+      <h3 class="text-xl font-bold font-serif text-amber-200">Invite Buddies</h3>
+      <p class="text-xs text-gray-400 mt-1 mb-4">Scan this QR code with any phone camera to join this live table!</p>
+
+      <!-- QR Code Holder -->
+      <div class="bg-white p-3 rounded-xl inline-block shadow-lg mx-auto mb-4" id="qrcodeCanvas"></div>
+
+      <div class="bg-felt-950 p-2.5 rounded-lg border border-felt-700 flex items-center justify-between text-xs mb-4">
+        <span class="text-gray-400 font-semibold">Room Code:</span>
+        <span id="shareModalRoomCode" class="font-mono font-bold text-gold-400 text-base tracking-wider">TABLE-1</span>
+      </div>
+
+      <button id="copyShareLinkBtn" onclick="copyShareableLink()" class="w-full py-2.5 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded-lg text-xs transition shadow flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+        <span id="copyShareBtnText">Copy Shareable Link</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Switch or Create Room -->
+  <div id="roomModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-felt-900 border border-felt-600 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+      <button onclick="closeModal('roomModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      <h3 class="text-lg font-bold font-serif text-amber-200 mb-3">Join or Create Table</h3>
+      <p class="text-xs text-gray-400 mb-4">Enter a 4-8 letter room name (e.g. <span class="font-mono text-gold-400">POKER-NIGHT</span>) to connect your phones to the same table.</p>
+
+      <form id="roomForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room / Table Code</label>
+          <input type="text" id="inputRoomCode" required placeholder="e.g. FRIDAY-GAME" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" onclick="generateRandomRoomCode()" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold transition border border-felt-600">Random Code</button>
+          <button type="submit" class="w-1/2 py-2 bg-gradient-to-r from-gold-600 to-amber-500 hover:from-gold-500 text-black rounded-lg text-xs font-bold transition shadow">Join Table</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification element -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-felt-800 border border-gold-400/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 pointer-events-none">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">Notification</span>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global Firebase setup compliant with Rules 1, 2, and 3
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'poker-ledger-v1';
+    let firebaseConfig = null;
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    let firestoreUnsubscribe = null;
+
+    try {
+      if (typeof __firebase_config !== 'undefined') {
+        firebaseConfig = JSON.parse(__firebase_config);
+      }
+    } catch(e) {
+      console.warn("No global __firebase_config found, fallback will be used.");
+    }
+
+    const COLOR_PRESETS = [
+      { name: 'Emerald', bg: 'bg-emerald-600', hex: '#059669' },
+      { name: 'Ruby', bg: 'bg-rose-600', hex: '#e11d48' },
+      { name: 'Sapphire', bg: 'bg-blue-600', hex: '#2563eb' },
+      { name: 'Amber', bg: 'bg-amber-600', hex: '#d97706' },
+      { name: 'Purple', bg: 'bg-purple-600', hex: '#9333ea' },
+      { name: 'Slate', bg: 'bg-gray-600', hex: '#4b5563' }
+    ];
+
+    // Read room from URL query ?room=XYZ or default
+    const urlParams = new URLSearchParams(window.location.search);
+    let activeRoomId = (urlParams.get('room') || 'TABLE-1').toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'TABLE-1';
+
+    // Current claimed seat on this device
+    let claimedPlayerId = localStorage.getItem(`claimed_seat_${activeRoomId}`) || null;
+
+    let currentTab = 'game';
+    let selectedColor = COLOR_PRESETS[0].hex;
+    let isRemoteUpdate = false;
+
+    // Central Live Table State
+    window.tableState = {
+      room: activeRoomId,
+      currency: '€',
+      defaultBuyin: 20,
+      rakeEnabled: true,
+      rakePerPerson: 1,
+      rakeCollector: '1',
+      players: [
+        { id: '1', name: 'Alex (Host)', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '2', name: 'Sarah', color: COLOR_PRESETS[1].hex, buyins: [20, 20], cashout: 0, hasCashedOut: false },
+        { id: '3', name: 'Dave', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false }
+      ],
+      // Anonymous historical milestones (No player names, No Biggest Win)
+      allTimeRecords: {
+        biggestBuyin: { amount: 60, date: 'Oct 2026' },
+        biggestLoss: { amount: 41, date: 'Sep 2026' },
+        totalSessions: 3
+      },
+      lastUpdatedBy: 'init',
+      lastUpdatedAt: Date.now()
+    };
+
+    // Initialize Auth & Firestore
+    async function initFirebase() {
+      const syncStatusText = document.getElementById('syncStatusText');
+      const syncStatusIndicator = document.getElementById('syncStatusIndicator');
+      const footerMode = document.getElementById('footerSyncModeText');
+      const footerUser = document.getElementById('footerUserId');
+
+      if (!firebaseConfig) {
+        syncStatusText.innerText = "Offline / Local Mode";
+        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-blue-400";
+        footerMode.innerText = "Local Device Mode";
+        loadFromLocalStorage();
+        renderAll();
+        return;
+      }
+
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Mandatory Rule 3: Auth before queries
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        currentUser = auth.currentUser;
+        footerUser.innerText = `User: ${currentUser ? currentUser.uid : 'anon'}`;
+        syncStatusText.innerText = "Cloud Live Synced";
+        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+        footerMode.innerText = `Room: ${activeRoomId} (Live Cloud)`;
+
+        subscribeToRoom(activeRoomId);
+
+      } catch (err) {
+        console.error("Firebase init fallback to local:", err);
+        syncStatusText.innerText = "Local Storage (Cloud Offline)";
+        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-amber-400";
+        loadFromLocalStorage();
+        renderAll();
+      }
+    }
+
+    // Mandatory Rule 1: Strict public data path: /artifacts/{appId}/public/data/{collectionName}/{documentId}
+    function subscribeToRoom(roomId) {
+      if (firestoreUnsubscribe) {
+        firestoreUnsubscribe();
+      }
+
+      if (!db || !currentUser) {
+        loadFromLocalStorage();
+        renderAll();
+        return;
+      }
+
+      const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'tables', roomId);
+
+      firestoreUnsubscribe = onSnapshot(roomDocRef, (snap) => {
+        if (snap.exists()) {
+          const cloudData = snap.data();
+          if (cloudData) {
+            isRemoteUpdate = true;
+            window.tableState = {
+              ...window.tableState,
+              ...cloudData,
+              allTimeRecords: {
+                biggestBuyin: { 
+                  amount: cloudData.allTimeRecords?.biggestBuyin?.amount || 0,
+                  date: cloudData.allTimeRecords?.biggestBuyin?.date || ''
+                },
+                biggestLoss: { 
+                  amount: cloudData.allTimeRecords?.biggestLoss?.amount || 0,
+                  date: cloudData.allTimeRecords?.biggestLoss?.date || ''
+                },
+                totalSessions: cloudData.allTimeRecords?.totalSessions || 0
+              }
+            };
+            renderAll();
+            isRemoteUpdate = false;
+          }
+        } else {
+          // If first time creating this room in cloud, initialize with current table state
+          broadcastCloudUpdate();
+        }
+      }, (error) => {
+        console.error("Firestore onSnapshot error:", error);
+        showToast("Cloud sync connection disrupted", "⚠️");
+      });
+    }
+
+    async function broadcastCloudUpdate() {
+      // Save local backup first
+      saveToLocalStorage();
+
+      if (!db || !currentUser) {
+        renderAll();
+        return;
+      }
+
+      try {
+        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'tables', activeRoomId);
+        window.tableState.lastUpdatedBy = currentUser.uid;
+        window.tableState.lastUpdatedAt = Date.now();
+
+        await setDoc(roomDocRef, {
+          room: activeRoomId,
+          currency: window.tableState.currency,
+          defaultBuyin: window.tableState.defaultBuyin,
+          rakeEnabled: window.tableState.rakeEnabled,
+          rakePerPerson: window.tableState.rakePerPerson,
+          rakeCollector: window.tableState.rakeCollector,
+          players: window.tableState.players,
+          allTimeRecords: window.tableState.allTimeRecords,
+          lastUpdatedBy: currentUser.uid,
+          lastUpdatedAt: Date.now()
+        }, { merge: true });
+
+      } catch (err) {
+        console.error("Error writing to Firestore:", err);
+      }
+    }
+
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem(`poker_table_${activeRoomId}`, JSON.stringify(window.tableState));
+      } catch (e) {}
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const local = localStorage.getItem(`poker_table_${activeRoomId}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          window.tableState = { ...window.tableState, ...parsed };
+        }
+      } catch (e) {}
+    }
+
+    function calculateTotals() {
+      let totalBuyins = 0;
+      let totalCashouts = 0;
+      let completedCashoutsCount = 0;
+
+      window.tableState.players.forEach(p => {
+        const playerBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        totalBuyins += playerBuy;
+        if (p.hasCashedOut) {
+          totalCashouts += (parseFloat(p.cashout) || 0);
+          completedCashoutsCount++;
+        }
+      });
+
+      const totalRake = window.tableState.rakeEnabled ? (window.tableState.players.length * (parseFloat(window.tableState.rakePerPerson) || 0)) : 0;
+
+      return {
+        totalBuyins: Math.round(totalBuyins * 100) / 100,
+        totalCashouts: Math.round(totalCashouts * 100) / 100,
+        totalRake: Math.round(totalRake * 100) / 100,
+        completedCashoutsCount
+      };
+    }
+
+    function getPlayerNet(player) {
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const totalRakePot = window.tableState.players.length * perPersonRake;
+      const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+      const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
+
+      let net = cash - totalBuy - perPersonRake;
+      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id) {
+        net += totalRakePot;
+      }
+      return Math.round(net * 100) / 100;
+    }
+
+    // Sync records anonymously without tracking or showing player names
+    function syncAllTimeRecordsFromCurrent() {
+      let updated = false;
+      const today = new Date().toLocaleDateString();
+
+      window.tableState.players.forEach(p => {
+        const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        if (totalBuy > (window.tableState.allTimeRecords.biggestBuyin.amount || 0)) {
+          window.tableState.allTimeRecords.biggestBuyin = {
+            amount: totalBuy,
+            date: today
+          };
+          updated = true;
+        }
+
+        if (p.hasCashedOut) {
+          const net = getPlayerNet(p);
+          if (net < 0 && Math.abs(net) > (window.tableState.allTimeRecords.biggestLoss.amount || 0)) {
+            window.tableState.allTimeRecords.biggestLoss = {
+              amount: Math.abs(net),
+              date: today
+            };
+            updated = true;
+          }
+        }
+      });
+
+      return updated;
+    }
+
+    function computeOptimalSettlement() {
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const totalRakePot = window.tableState.players.length * perPersonRake;
+
+      const balances = window.tableState.players.map(p => ({
+        id: p.id,
+        name: p.name,
+        net: getPlayerNet(p)
+      }));
+
+      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === 'KITTY' && totalRakePot > 0) {
+        balances.push({
+          id: 'KITTY_POT',
+          name: '🏦 House Kitty / Pot',
+          net: Math.round(totalRakePot * 100) / 100
+        });
+      }
+
+      let debtors = balances.filter(b => b.net < -0.009).map(b => ({ ...b, amount: Math.abs(b.net) }));
+      let creditors = balances.filter(b => b.net > 0.009).map(b => ({ ...b, amount: b.net }));
+
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      const transactions = [];
+      let dIdx = 0;
+      let cIdx = 0;
+
+      while (dIdx < debtors.length && cIdx < creditors.length) {
+        const debtor = debtors[dIdx];
+        const creditor = creditors[cIdx];
+
+        const settlementAmount = Math.min(debtor.amount, creditor.amount);
+        const roundedAmount = Math.round(settlementAmount * 100) / 100;
+
+        if (roundedAmount > 0) {
+          transactions.push({
+            from: debtor.name,
+            to: creditor.name,
+            amount: roundedAmount
+          });
+        }
+
+        debtor.amount = Math.round((debtor.amount - settlementAmount) * 100) / 100;
+        creditor.amount = Math.round((creditor.amount - settlementAmount) * 100) / 100;
+
+        if (debtor.amount <= 0.009) dIdx++;
+        if (creditor.amount <= 0.009) cIdx++;
+      }
+
+      return transactions;
+    }
+
+    function renderIntegrityBanner() {
+      const banner = document.getElementById('integrityBanner');
+      const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount } = calculateTotals();
+      
+      const totalAccounted = Math.round((totalCashouts + totalRake) * 100) / 100;
+      const diff = Math.round((totalAccounted - totalBuyins) * 100) / 100;
+      const allCashedOut = window.tableState.players.length > 0 && completedCashoutsCount === window.tableState.players.length;
+
+      if (window.tableState.players.length === 0) {
+        banner.className = "p-4 rounded-xl border border-felt-700 bg-felt-900/60 text-gray-400 flex flex-col md:flex-row items-center justify-between";
+        banner.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">🃏</span>
+            <div>
+              <h3 class="font-bold text-gray-200">Table is Empty</h3>
+              <p class="text-xs text-gray-400">Add players or invite your buddies with the Room Code.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const rakeText = window.tableState.rakeEnabled ? ` + Rake (${window.tableState.currency}${totalRake.toFixed(2)})` : '';
+
+      if (Math.abs(diff) < 0.01) {
+        banner.className = "p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-r from-felt-900 via-emerald-950/40 to-felt-900 text-white shadow-lg shadow-emerald-950/40 flex flex-col sm:flex-row items-center justify-between gap-4";
+        banner.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0">
+              ✓
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base sm:text-lg text-emerald-300">Table is Perfectly Balanced!</h3>
+                <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-500/30">Verified</span>
+              </div>
+              <p class="text-xs text-gray-300 mt-0.5">
+                Total Buy-ins (<strong class="text-white">${window.tableState.currency}${totalBuyins.toFixed(2)}</strong>) = Total Cash-outs (<strong class="text-white">${window.tableState.currency}${totalCashouts.toFixed(2)}</strong>)${rakeText}.
+              </p>
+            </div>
+          </div>
+          <div class="px-3 py-1.5 rounded-lg bg-emerald-900/50 border border-emerald-500/30 text-emerald-200 text-xs font-semibold whitespace-nowrap">
+            Discrepancy: ${window.tableState.currency}0.00
+          </div>
+        `;
+      } else if (diff < 0) {
+        const missing = Math.abs(diff);
+        banner.className = "p-4 sm:p-5 rounded-xl border border-amber-600/60 bg-gradient-to-r from-amber-950/30 via-felt-900 to-amber-950/20 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4";
+        banner.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-2xl flex-shrink-0">
+              ⚠️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base sm:text-lg text-amber-300">Unaccounted Chips: Missing ${window.tableState.currency}${missing.toFixed(2)}</h3>
+                <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/30">${allCashedOut ? 'Discrepancy' : 'Live Game Active'}</span>
+              </div>
+              <p class="text-xs text-gray-300 mt-0.5">
+                Buy-ins exceed Cash-outs${rakeText}. ${allCashedOut ? 'Count chips again or check for dropped chips.' : 'Players still need to enter their cashout chip stack.'}
+              </p>
+            </div>
+          </div>
+          <div class="px-3 py-1.5 rounded-lg bg-amber-900/40 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold whitespace-nowrap">
+            -${window.tableState.currency}${missing.toFixed(2)}
+          </div>
+        `;
+      } else {
+        banner.className = "p-4 sm:p-5 rounded-xl border border-rose-600/70 bg-gradient-to-r from-rose-950/30 via-felt-900 to-rose-950/20 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4";
+        banner.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-400 text-2xl flex-shrink-0">
+              🚨
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base sm:text-lg text-rose-300">Surplus Chips: Extra +${window.tableState.currency}${diff.toFixed(2)}</h3>
+                <span class="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-rose-500/30">Over-Count</span>
+              </div>
+              <p class="text-xs text-gray-300 mt-0.5">
+                Cashouts exceed Buy-ins. Check if an unrecorded rebuy occurred.
+              </p>
+            </div>
+          </div>
+          <div class="px-3 py-1.5 rounded-lg bg-rose-900/40 border border-rose-500/30 text-rose-300 font-mono text-xs font-bold whitespace-nowrap">
+            +${window.tableState.currency}${diff.toFixed(2)}
+          </div>
+        `;
+      }
+    }
+
+    function renderRakeControls() {
+      const toggle = document.getElementById('rakeToggle');
+      const inputsContainer = document.getElementById('rakeInputsContainer');
+      const rakeInput = document.getElementById('rakePerPersonInput');
+      const statusBadge = document.getElementById('rakeStatusBadge');
+      const collectorSelect = document.getElementById('rakeCollectorSelect');
+
+      toggle.checked = window.tableState.rakeEnabled;
+      rakeInput.value = window.tableState.rakePerPerson;
+
+      if (window.tableState.rakeEnabled) {
+        inputsContainer.classList.remove('opacity-50', 'pointer-events-none');
+        statusBadge.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gold-500/40 text-gold-300 bg-gold-950/40";
+        statusBadge.innerText = `${window.tableState.currency}${window.tableState.rakePerPerson}/player`;
+      } else {
+        inputsContainer.classList.add('opacity-50', 'pointer-events-none');
+        statusBadge.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400";
+        statusBadge.innerText = "Disabled";
+      }
+
+      const currentSelected = window.tableState.rakeCollector;
+      collectorSelect.innerHTML = `<option value="KITTY">Separate Kitty / Pot</option>`;
+      window.tableState.players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.text = `${p.name} (Host)`;
+        if (p.id === currentSelected) {
+          opt.selected = true;
+        }
+        collectorSelect.appendChild(opt);
+      });
+      if (currentSelected === 'KITTY') {
+        collectorSelect.value = 'KITTY';
+      }
+    }
+
+    function renderOverviewStats() {
+      const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount } = calculateTotals();
+      
+      document.getElementById('statTotalBuyin').innerText = `${window.tableState.currency}${totalBuyins.toFixed(2)}`;
+      document.getElementById('statTotalCashout').innerText = `${window.tableState.currency}${totalCashouts.toFixed(2)}`;
+      document.getElementById('statPlayerCount').innerText = `${window.tableState.players.length} seated`;
+      document.getElementById('statCashedCount').innerText = `${completedCashoutsCount} of ${window.tableState.players.length} stacks verified`;
+      document.getElementById('playerBadgeCount').innerText = window.tableState.players.length;
+
+      const statRake = document.getElementById('statTotalRake');
+      const statRakeDesc = document.getElementById('statRakeCollectorDesc');
+      if (window.tableState.rakeEnabled) {
+        statRake.innerText = `${window.tableState.currency}${totalRake.toFixed(2)}`;
+        let collectorName = 'Separate Kitty';
+        if (window.tableState.rakeCollector !== 'KITTY') {
+          const colPlayer = window.tableState.players.find(p => p.id === window.tableState.rakeCollector);
+          if (colPlayer) collectorName = `${colPlayer.name} (Host)`;
+        }
+        statRakeDesc.innerText = `Held by: ${collectorName}`;
+      } else {
+        statRake.innerText = `${window.tableState.currency}0.00`;
+        statRakeDesc.innerText = 'Rake turned off';
+      }
+
+      // Live Session "Biggest Winner" and "Biggest Loser"
+      let maxWin = 0;
+      let topWinner = null;
+      let maxLoss = 0;
+      let topLoser = null;
+
+      window.tableState.players.forEach(p => {
+        const net = getPlayerNet(p);
+        if (net > maxWin) {
+          maxWin = net;
+          topWinner = p;
+        }
+        if (net < maxLoss) {
+          maxLoss = net;
+          topLoser = p;
+        }
+      });
+
+      const winnerElem = document.getElementById('statTopWinner');
+      const winnerAmt = document.getElementById('statTopWinnerAmt');
+      if (topWinner && maxWin > 0.009) {
+        winnerElem.innerText = topWinner.name;
+        winnerAmt.innerText = `+${window.tableState.currency}${maxWin.toFixed(2)}`;
+      } else {
+        winnerElem.innerText = '-';
+        winnerAmt.innerText = `+${window.tableState.currency}0.00`;
+      }
+
+      const loserElem = document.getElementById('statTopLoser');
+      const loserAmt = document.getElementById('statTopLoserAmt');
+      if (topLoser && maxLoss < -0.009) {
+        loserElem.innerText = topLoser.name;
+        loserAmt.innerText = `-${window.tableState.currency}${Math.abs(maxLoss).toFixed(2)}`;
+      } else {
+        loserElem.innerText = '-';
+        loserAmt.innerText = `-${window.tableState.currency}0.00`;
+      }
+
+      document.querySelectorAll('.currencySymbol').forEach(el => {
+        el.innerText = window.tableState.currency;
+      });
+
+      // Claimed Badge in Header
+      const claimedBadge = document.getElementById('myClaimedBadge');
+      if (claimedPlayerId) {
+        const myP = window.tableState.players.find(p => p.id === claimedPlayerId);
+        if (myP) {
+          claimedBadge.innerText = `My Seat: ${myP.name}`;
+          claimedBadge.classList.remove('hidden');
+        } else {
+          claimedBadge.classList.add('hidden');
+        }
+      } else {
+        claimedBadge.classList.add('hidden');
+      }
+    }
+
+    function renderPlayerCards() {
+      const container = document.getElementById('playersContainer');
+      container.innerHTML = '';
+
+      if (window.tableState.players.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-gray-400 bg-felt-900/40 rounded-2xl border border-dashed border-felt-700">
+            <span class="text-4xl block mb-2">♠</span>
+            <p class="text-base font-semibold text-gray-300">No players seated at this table</p>
+            <p class="text-xs text-gray-500 mt-1">Tap "Add Player" or invite friends with Room Code <span class="font-mono text-gold-400">${activeRoomId}</span>.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const totalRakePot = window.tableState.players.length * perPersonRake;
+
+      window.tableState.players.forEach((p) => {
+        const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        const roundedNet = getPlayerNet(p);
+        const rebuysCount = p.buyins.length > 1 ? p.buyins.length - 1 : 0;
+        const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === p.id);
+        const isMySeat = (claimedPlayerId === p.id);
+
+        let profitBadge = '';
+        if (!p.hasCashedOut) {
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-semibold rounded bg-felt-800 text-gray-400 border border-felt-600">Active Game</span>`;
+        } else if (roundedNet > 0.009) {
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/90 text-emerald-400 border border-emerald-700/60 shadow">+${window.tableState.currency}${roundedNet.toFixed(2)}</span>`;
+        } else if (roundedNet < -0.009) {
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-rose-950/90 text-rose-400 border border-rose-700/60 shadow">-${window.tableState.currency}${Math.abs(roundedNet).toFixed(2)}</span>`;
+        } else {
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-gray-800 text-gray-300 border border-gray-600">Even</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-felt-900/90 border ${isMySeat ? 'border-gold-400 ring-2 ring-gold-400/40' : 'border-felt-700 hover:border-felt-500'} rounded-xl p-4 sm:p-5 shadow-xl transition-all flex flex-col justify-between relative group`;
+        
+        card.innerHTML = `
+          <div>
+            <!-- Header: Avatar, Name & Edit -->
+            <div class="flex items-center justify-between pb-3 border-b border-felt-800">
+              <div class="flex items-center space-x-3 overflow-hidden">
+                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/10" style="background-color: ${p.color};">
+                  ${escapeHtml(p.name.charAt(0).toUpperCase())}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span 
+                      class="font-bold text-base text-white truncate cursor-pointer hover:text-gold-300 transition flex items-center gap-1 group/name" 
+                      title="Click to rename" 
+                      onclick="window.openEditPlayerModal('${p.id}')"
+                    >
+                      <span>${escapeHtml(p.name)}</span>
+                      <svg class="w-3.5 h-3.5 text-gray-500 group-hover/name:text-gold-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </span>
+                    ${isCollector ? `<span class="bg-gold-500/20 text-gold-300 text-[10px] px-1.5 py-0.5 rounded border border-gold-500/30 font-bold whitespace-nowrap">HOST</span>` : ''}
+                    ${isMySeat ? `<span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 font-bold whitespace-nowrap">YOU</span>` : ''}
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px] text-gray-400">
+                    <span>${p.buyins.length} Buy-in${p.buyins.length > 1 ? 's' : ''}</span>
+                    ${rebuysCount > 0 ? `<span class="text-amber-400 font-medium">(${rebuysCount} Re-buy)</span>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Card Actions -->
+              <div class="flex items-center space-x-1 flex-shrink-0">
+                <button onclick="window.claimSeat('${p.id}')" title="${isMySeat ? 'Unclaim seat' : 'Claim this is my seat on this phone'}" class="text-xs px-2 py-1 rounded border transition ${isMySeat ? 'bg-gold-500 text-black font-bold border-gold-400' : 'bg-felt-800 text-gray-300 hover:text-white border-felt-600'}">
+                  ${isMySeat ? 'My Seat ✓' : 'Claim'}
+                </button>
+                <button onclick="window.openEditPlayerModal('${p.id}')" title="Edit player" class="text-gray-400 hover:text-gold-400 p-1 rounded transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+                <button onclick="window.removePlayer('${p.id}')" title="Remove Player" class="text-gray-400 hover:text-red-400 p-1 rounded transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Buyin & Quick Rebuy Buttons -->
+            <div class="mt-3.5 space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-gray-400">Total Buy-in:</span>
+                <span class="font-bold text-amber-300 font-mono text-sm">${window.tableState.currency}${totalBuy.toFixed(2)}</span>
+              </div>
+
+              ${window.tableState.rakeEnabled ? `
+                <div class="flex justify-between items-center text-xs text-gold-400/90 bg-gold-950/30 px-2 py-1 rounded border border-gold-500/20">
+                  <span>Table Fee / Rake Paid:</span>
+                  <span class="font-mono font-semibold">-${window.tableState.currency}${perPersonRake.toFixed(2)}</span>
+                </div>
+                ${isCollector ? `
+                  <div class="flex justify-between items-center text-xs text-emerald-400 bg-emerald-950/30 px-2 py-1 rounded border border-emerald-500/20">
+                    <span>House Pot Collected:</span>
+                    <span class="font-mono font-semibold">+${window.tableState.currency}${totalRakePot.toFixed(2)}</span>
+                  </div>
+                ` : ''}
+              ` : ''}
+
+              <!-- Rebuy quick-add buttons -->
+              <div class="bg-felt-950/60 p-2 rounded-lg border border-felt-800 flex items-center justify-between gap-1">
+                <span class="text-[11px] text-gray-400 font-medium">Rebuy:</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
+                    +${window.tableState.currency}10
+                  </button>
+                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
+                    +${window.tableState.currency}20
+                  </button>
+                  <button onclick="window.promptCustomBuyin('${p.id}')" class="px-2 py-0.5 bg-amber-950/60 hover:bg-amber-900 text-amber-300 rounded text-[11px] font-semibold border border-amber-800/80 transition" title="Custom Buyin">
+                    +Custom
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- End Cash-out Stack Input -->
+            <div class="mt-4 pt-3 border-t border-felt-800">
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-xs font-semibold text-gray-300 flex items-center gap-1">
+                  <span>End Chip Stack</span>
+                  <span class="text-[10px] text-gray-500 font-normal">(Cash Out)</span>
+                </label>
+                <div>${profitBadge}</div>
+              </div>
+
+              <div class="relative rounded-lg shadow-inner">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gold-400 font-bold text-sm">
+                  ${window.tableState.currency}
+                </span>
+                <input 
+                  type="number" 
+                  step="any"
+                  min="0"
+                  placeholder="Enter final chips"
+                  value="${p.hasCashedOut ? p.cashout : ''}"
+                  onchange="window.updateCashout('${p.id}', this.value)"
+                  class="w-full bg-felt-800/80 border ${p.hasCashedOut ? (roundedNet >= 0 ? 'border-emerald-600/70 focus:ring-emerald-400' : 'border-rose-600/70 focus:ring-rose-400') : 'border-felt-600 focus:ring-gold-400'} rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:ring-2"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- History / Undo Rebuy -->
+          <div class="mt-3 pt-2 text-[11px] text-gray-400 flex items-center justify-between border-t border-felt-800/60">
+            <span class="truncate max-w-[190px]">Buyins: [${p.buyins.map(b => `${window.tableState.currency}${b}`).join(', ')}]</span>
+            ${p.buyins.length > 1 ? `
+              <button onclick="window.undoLastBuyin('${p.id}')" class="text-red-400 hover:text-red-300 font-medium ml-1 transition" title="Undo last rebuy">
+                Undo Rebuy
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderSettlement() {
+      const list = document.getElementById('settlementList');
+      const transactions = computeOptimalSettlement();
+      const { totalBuyins, totalCashouts, totalRake } = calculateTotals();
+      const diff = Math.round((totalCashouts + totalRake - totalBuyins) * 100) / 100;
+
+      list.innerHTML = '';
+
+      if (window.tableState.players.length < 2) {
+        list.innerHTML = `
+          <div class="p-6 text-center text-gray-400 bg-felt-950/40 rounded-xl border border-felt-800">
+            <p class="text-sm">Need at least 2 players to calculate payments.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (transactions.length === 0) {
+        list.innerHTML = `
+          <div class="p-6 text-center text-gray-400 bg-felt-950/40 rounded-xl border border-felt-800">
+            <p class="text-sm text-gray-300 font-medium">All accounts settled or everyone is break-even!</p>
+            <p class="text-xs text-gray-500 mt-1">Enter player chip cash-outs above to calculate who pays whom.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (Math.abs(diff) >= 0.01) {
+        const warning = document.createElement('div');
+        warning.className = "mb-3 p-3 rounded-lg bg-amber-950/40 border border-amber-600/40 text-amber-200 text-xs flex items-center gap-2";
+        warning.innerHTML = `
+          <span>⚠️</span>
+          <span><strong>Table Discrepancy:</strong> Off by ${window.tableState.currency}${Math.abs(diff).toFixed(2)}. Settle remaining chip stacks to ensure accurate payouts.</span>
+        `;
+        list.appendChild(warning);
+      }
+
+      transactions.forEach((tx) => {
+        const isHouseTarget = tx.to.includes('House Kitty');
+        const item = document.createElement('div');
+        item.className = `border rounded-xl p-3 sm:p-4 flex items-center justify-between shadow hover:border-gold-500/40 transition ${isHouseTarget ? 'bg-amber-950/20 border-gold-500/40' : 'bg-felt-800/90 border-felt-700/90'}`;
+        item.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full ${isHouseTarget ? 'bg-amber-900/60 border border-gold-500/50 text-gold-300' : 'bg-rose-900/60 border border-rose-500/40 text-rose-300'} flex items-center justify-center text-xs font-bold">
+              ${isHouseTarget ? '🏦' : '💸'}
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white">
+                <span class="text-rose-400 font-bold">${escapeHtml(tx.from)}</span>
+                <span class="text-gray-400 text-xs mx-1">pays</span>
+                <span class="${isHouseTarget ? 'text-gold-300' : 'text-emerald-400'} font-bold">${escapeHtml(tx.to)}</span>
+              </div>
+              <p class="text-[11px] text-gray-400">${isHouseTarget ? 'Table fee / Kitty contribution' : 'Direct player payout'}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-base sm:text-lg font-bold font-mono text-gold-400">${window.tableState.currency}${tx.amount.toFixed(2)}</span>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function renderRecordsTab() {
+      const rec = window.tableState.allTimeRecords;
+      const sym = window.tableState.currency;
+
+      // Pure monetary amount and date logs (Strictly no player names, no biggest win)
+      document.getElementById('hofBiggestBuyinAmt').innerText = `${sym}${parseFloat(rec.biggestBuyin.amount || 0).toFixed(2)}`;
+      document.getElementById('hofBiggestBuyinDate').innerText = rec.biggestBuyin.date ? `Recorded: ${rec.biggestBuyin.date}` : 'No date recorded';
+
+      document.getElementById('hofBiggestLossAmt').innerText = `-${sym}${parseFloat(rec.biggestLoss.amount || 0).toFixed(2)}`;
+      document.getElementById('hofBiggestLossDate').innerText = rec.biggestLoss.date ? `Recorded: ${rec.biggestLoss.date}` : 'No date recorded';
+
+      document.getElementById('allTimeGamesBadge').innerText = `${rec.totalSessions || 0} Sessions Logged`;
+
+      document.getElementById('hofInputBuyinAmt').value = rec.biggestBuyin.amount || 0;
+      document.getElementById('hofInputBuyinDate').value = rec.biggestBuyin.date || '';
+      document.getElementById('hofInputLossAmt').value = rec.biggestLoss.amount || 0;
+      document.getElementById('hofInputLossDate').value = rec.biggestLoss.date || '';
+    }
+
+    function renderAll() {
+      document.getElementById('currentRoomCodeLabel').innerText = activeRoomId;
+      document.getElementById('shareModalRoomCode').innerText = activeRoomId;
+
+      renderIntegrityBanner();
+      renderRakeControls();
+      renderOverviewStats();
+      renderPlayerCards();
+      renderSettlement();
+
+      if (currentTab === 'records') {
+        renderRecordsTab();
+      }
+    }
+
+    window.claimSeat = function(playerId) {
+      if (claimedPlayerId === playerId) {
+        claimedPlayerId = null;
+        localStorage.removeItem(`claimed_seat_${activeRoomId}`);
+        showToast("Seat unlinked from this device", "👤");
+      } else {
+        claimedPlayerId = playerId;
+        localStorage.setItem(`claimed_seat_${activeRoomId}`, playerId);
+        const p = window.tableState.players.find(x => x.id === playerId);
+        showToast(`You are now seated as ${p ? p.name : 'Player'}!`, "🎯");
+      }
+      renderAll();
+    };
+
+    window.addQuickRebuy = function(playerId, amount) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+      p.buyins.push(amount);
+      syncAllTimeRecordsFromCurrent();
+      broadcastCloudUpdate();
+      showToast(`${p.name} rebought +${window.tableState.currency}${amount}`, "🪙");
+    };
+
+    window.promptCustomBuyin = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+      const val = prompt(`Enter custom buy-in amount for ${p.name}:`, window.tableState.defaultBuyin);
+      if (val !== null) {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num > 0) {
+          p.buyins.push(num);
+          syncAllTimeRecordsFromCurrent();
+          broadcastCloudUpdate();
+          showToast(`${p.name} added ${window.tableState.currency}${num}`, "🪙");
+        }
+      }
+    };
+
+    window.undoLastBuyin = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p || p.buyins.length <= 1) return;
+      const removed = p.buyins.pop();
+      broadcastCloudUpdate();
+      showToast(`Removed last rebuy of ${window.tableState.currency}${removed} for ${p.name}`, "↩️");
+    };
+
+    window.updateCashout = function(playerId, value) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+
+      if (value === '' || value === null) {
+        p.hasCashedOut = false;
+        p.cashout = 0;
+      } else {
+        const parsed = parseFloat(value);
+        p.hasCashedOut = true;
+        p.cashout = isNaN(parsed) ? 0 : parsed;
+      }
+
+      syncAllTimeRecordsFromCurrent();
+      broadcastCloudUpdate();
+    };
+
+    window.removePlayer = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+
+      if (confirm(`Remove ${p.name} from the table?`)) {
+        window.tableState.players = window.tableState.players.filter(x => x.id !== playerId);
+        if (window.tableState.rakeCollector === playerId) {
+          window.tableState.rakeCollector = 'KITTY';
+        }
+        if (claimedPlayerId === playerId) {
+          claimedPlayerId = null;
+          localStorage.removeItem(`claimed_seat_${activeRoomId}`);
+        }
+        broadcastCloudUpdate();
+        showToast(`${p.name} removed`, "🗑️");
+      }
+    };
+
+    window.openEditPlayerModal = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+
+      document.getElementById('modalTitle').innerText = 'Edit Player';
+      document.getElementById('modalPlayerId').value = p.id;
+      document.getElementById('modalPlayerName').value = p.name;
+      document.getElementById('modalBuyinGroup').classList.add('hidden');
+      document.getElementById('savePlayerSubmitBtn').innerText = 'Update Player';
+
+      selectedColor = p.color || COLOR_PRESETS[0].hex;
+      updateColorRadioDisplay(selectedColor);
+
+      document.getElementById('playerModal').classList.remove('hidden');
+      document.getElementById('modalPlayerName').focus();
+    };
+
+    window.archiveCurrentSession = function() {
+      if (window.tableState.players.length === 0) {
+        showToast("No players in session to archive", "⚠️");
+        return;
+      }
+
+      const confirmArchive = confirm("Archive this game night? This will finalize all-time records (Biggest Buy-in & Biggest Loss Ever), increment total sessions played, and reset stacks for the next game.");
+      if (!confirmArchive) return;
+
+      syncAllTimeRecordsFromCurrent();
+      window.tableState.allTimeRecords.totalSessions = (window.tableState.allTimeRecords.totalSessions || 0) + 1;
+
+      // Keep roster, reset active buyins & stacks
+      window.tableState.players = window.tableState.players.map(p => ({
+        ...p,
+        buyins: [window.tableState.defaultBuyin],
+        cashout: 0,
+        hasCashedOut: false
+      }));
+
+      broadcastCloudUpdate();
+      renderRecordsTab();
+      showToast("Session archived! All-time records updated across all devices.", "🏆");
+    };
+
+    window.resetAllTimeRecords = function() {
+      if (confirm("Reset all historical records to zero? This cannot be undone.")) {
+        window.tableState.allTimeRecords = {
+          biggestBuyin: { amount: 0, date: '' },
+          biggestLoss: { amount: 0, date: '' },
+          totalSessions: 0
+        };
+        broadcastCloudUpdate();
+        renderRecordsTab();
+        showToast("Historical records reset to zero", "🔄");
+      }
+    };
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      const viewGame = document.getElementById('viewCurrentGame');
+      const viewRecords = document.getElementById('viewAllTimeRecords');
+      const btnGame = document.getElementById('tabGameBtn');
+      const btnRecords = document.getElementById('tabRecordsBtn');
+
+      if (tab === 'game') {
+        viewGame.classList.remove('hidden');
+        viewRecords.classList.add('hidden');
+        btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+      } else {
+        viewGame.classList.add('hidden');
+        viewRecords.classList.remove('hidden');
+        btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+        renderRecordsTab();
+      }
+    };
+
+    window.closeModal = function(id) {
+      document.getElementById(id).classList.add('hidden');
+    };
+
+    window.copyShareableLink = function() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('room', activeRoomId);
+      const textToCopy = url.toString();
+
+      const textarea = document.createElement("textarea");
+      textarea.value = textToCopy;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        document.getElementById('copyShareBtnText').innerText = "Link Copied!";
+        showToast("Table link copied to clipboard!", "📋");
+        setTimeout(() => {
+          document.getElementById('copyShareBtnText').innerText = "Copy Shareable Link";
+        }, 2200);
+      } catch (e) {
+        showToast("Failed to copy link", "❌");
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    };
+
+    window.generateRandomRoomCode = function() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "POKER-";
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('inputRoomCode').value = code;
+    };
+
+    function generateQrCodeForRoom() {
+      const qrContainer = document.getElementById('qrcodeCanvas');
+      qrContainer.innerHTML = '';
+      const url = new URL(window.location.href);
+      url.searchParams.set('room', activeRoomId);
+
+      try {
+        new QRCode(qrContainer, {
+          text: url.toString(),
+          width: 170,
+          height: 170,
+          colorDark: "#07180f",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (err) {
+        qrContainer.innerText = url.toString();
+      }
+    }
+
+    function showToast(message, icon = '✓') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+      toastMsg.innerText = message;
+      toastIcon.innerText = icon;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2600);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        switch (m) {
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          case "'": return '&#39;';
+        }
+      });
+    }
+
+    function updateColorRadioDisplay(colorHex) {
+      const radios = document.querySelectorAll('input[name="playerColor"]');
+      radios.forEach(r => {
+        r.checked = (r.value === colorHex);
+      });
+    }
+
+    function initColorPicker() {
+      const container = document.getElementById('colorPickerGroup');
+      container.innerHTML = '';
+
+      COLOR_PRESETS.forEach((col, idx) => {
+        const label = document.createElement('label');
+        label.className = "cursor-pointer";
+        label.innerHTML = `
+          <input type="radio" name="playerColor" value="${col.hex}" ${idx === 0 ? 'checked' : ''} class="sr-only peer">
+          <div class="w-8 h-8 rounded-full ${col.bg} peer-checked:ring-2 peer-checked:ring-white peer-checked:scale-110 transition-all flex items-center justify-center">
+            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+          </div>
+        `;
+        label.querySelector('input').addEventListener('change', (e) => {
+          selectedColor = e.target.value;
+        });
+        container.appendChild(label);
+      });
+    }
+
+    function generateTextSummary() {
+      const { totalBuyins, totalCashouts, totalRake } = calculateTotals();
+      const diff = Math.round((totalCashouts + totalRake - totalBuyins) * 100) / 100;
+      const transactions = computeOptimalSettlement();
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const rec = window.tableState.allTimeRecords;
+
+      let text = `♠ *POKER NIGHT LIVE LEDGER* ♠️\n`;
+      text += `🏷️ Room: ${activeRoomId}\n`;
+      text += `📅 Date: ${new Date().toLocaleDateString()}\n`;
+      text += `💰 Total Buy-ins: ${window.tableState.currency}${totalBuyins.toFixed(2)}\n`;
+      text += `🪙 Total Cashed Out: ${window.tableState.currency}${totalCashouts.toFixed(2)}\n`;
+      if (window.tableState.rakeEnabled) {
+        text += `🏦 House Rake / Fee: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player)\n`;
+      }
+      text += `⚖️ Balance Status: ${Math.abs(diff) < 0.01 ? 'Balanced (Zero Discrepancy)' : `⚠ Off by ${window.tableState.currency}${diff.toFixed(2)}`}\n\n`;
+
+      text += `*PLAYER STANDINGS:*\n`;
+      window.tableState.players.forEach(p => {
+        const buy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        const cash = p.hasCashedOut ? (parseFloat(p.cashout) || 0) : 0;
+        const net = getPlayerNet(p);
+        const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === p.id);
+        const symbol = net >= 0 ? '+' : '';
+        const collectorTag = isCollector ? ' [HOST]' : '';
+        const rakeTag = window.tableState.rakeEnabled ? ` (Fee: -${window.tableState.currency}${perPersonRake})` : '';
+        text += `• ${p.name}${collectorTag}: In ${window.tableState.currency}${buy} ➔ Out ${window.tableState.currency}${cash}${rakeTag} | Net: ${symbol}${window.tableState.currency}${net.toFixed(2)}\n`;
+      });
+
+      text += `\n*WHO PAYS WHOM:*\n`;
+      if (transactions.length === 0) {
+        text += `Everyone broke even or stacks not entered yet.\n`;
+      } else {
+        transactions.forEach(t => {
+          text += `👉 ${t.from} pays ${t.to}: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
+        });
+      }
+
+      text += `\n*🏆 ALL-TIME RECORDS:*\n`;
+      text += `💰 Biggest Buy-in Ever: ${window.tableState.currency}${rec.biggestBuyin.amount}\n`;
+      text += `🩸 Biggest Loss Ever: -${window.tableState.currency}${rec.biggestLoss.amount}\n`;
+
+      return text;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initColorPicker();
+      initFirebase();
+
+      // Share Modal QR Generator
+      document.getElementById('openShareModalBtn').addEventListener('click', () => {
+        generateQrCodeForRoom();
+        document.getElementById('shareModal').classList.remove('hidden');
+      });
+
+      // Room modal trigger
+      document.getElementById('openRoomModalBtn').addEventListener('click', () => {
+        document.getElementById('inputRoomCode').value = activeRoomId;
+        document.getElementById('roomModal').classList.remove('hidden');
+      });
+
+      // Room Form Switch
+      document.getElementById('roomForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = document.getElementById('inputRoomCode').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+        if (code) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('room', code);
+          window.location.href = url.toString();
+        }
+      });
+
+      // Clickable room code header to copy link
+      document.getElementById('currentRoomCodeLabel').addEventListener('click', () => {
+        window.copyShareableLink();
+      });
+
+      // Default Buyin Input
+      const defBuyinInput = document.getElementById('defaultBuyinInput');
+      defBuyinInput.value = window.tableState.defaultBuyin || 20;
+      defBuyinInput.addEventListener('change', (e) => {
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val) && val > 0) {
+          window.tableState.defaultBuyin = val;
+          broadcastCloudUpdate();
+        }
+      });
+
+      // Rake Toggle
+      const rakeToggle = document.getElementById('rakeToggle');
+      rakeToggle.addEventListener('change', (e) => {
+        window.tableState.rakeEnabled = e.target.checked;
+        broadcastCloudUpdate();
+        showToast(window.tableState.rakeEnabled ? "Rake / Table Fee enabled" : "Rake disabled", "🏦");
+      });
+
+      // Rake Amount Per Person
+      const rakeInput = document.getElementById('rakePerPersonInput');
+      rakeInput.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        window.tableState.rakePerPerson = isNaN(val) ? 0 : val;
+        broadcastCloudUpdate();
+      });
+
+      // Rake Collector Select
+      const collectorSelect = document.getElementById('rakeCollectorSelect');
+      collectorSelect.addEventListener('change', (e) => {
+        window.tableState.rakeCollector = e.target.value;
+        broadcastCloudUpdate();
+      });
+
+      // Add Player Button
+      document.getElementById('addPlayerBtn').addEventListener('click', () => {
+        document.getElementById('modalTitle').innerText = 'Add New Player';
+        document.getElementById('modalPlayerId').value = '';
+        document.getElementById('modalPlayerName').value = '';
+        document.getElementById('modalBuyinGroup').classList.remove('hidden');
+        document.getElementById('modalInitialBuyin').value = window.tableState.defaultBuyin;
+        document.getElementById('savePlayerSubmitBtn').innerText = 'Add Player';
+
+        selectedColor = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)].hex;
+        updateColorRadioDisplay(selectedColor);
+
+        document.getElementById('playerModal').classList.remove('hidden');
+        document.getElementById('modalPlayerName').focus();
+      });
+
+      // Player Form Submit
+      document.getElementById('playerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('modalPlayerId').value;
+        const name = document.getElementById('modalPlayerName').value.trim();
+
+        if (!name) return;
+
+        if (editId) {
+          const existing = window.tableState.players.find(p => p.id === editId);
+          if (existing) {
+            existing.name = name;
+            existing.color = selectedColor;
+            broadcastCloudUpdate();
+            window.closeModal('playerModal');
+            showToast(`Updated player "${name}"`, "✏️");
+          }
+        } else {
+          const buyin = parseFloat(document.getElementById('modalInitialBuyin').value) || 0;
+          const newPlayer = {
+            id: Date.now().toString(),
+            name: name,
+            color: selectedColor,
+            buyins: [buyin],
+            cashout: 0,
+            hasCashedOut: false
+          };
+          window.tableState.players.push(newPlayer);
+          syncAllTimeRecordsFromCurrent();
+          broadcastCloudUpdate();
+          window.closeModal('playerModal');
+          showToast(`${name} added to the table`, "🎲");
+        }
+      });
+
+      // All-Time Records Form Submit (Pure amounts, no names)
+      document.getElementById('hofForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        window.tableState.allTimeRecords.biggestBuyin = {
+          amount: parseFloat(document.getElementById('hofInputBuyinAmt').value) || 0,
+          date: document.getElementById('hofInputBuyinDate').value.trim()
+        };
+        window.tableState.allTimeRecords.biggestLoss = {
+          amount: parseFloat(document.getElementById('hofInputLossAmt').value) || 0,
+          date: document.getElementById('hofInputLossDate').value.trim()
+        };
+
+        broadcastCloudUpdate();
+        renderRecordsTab();
+        showToast("All-Time Records saved", "🏆");
+      });
+
+      // Copy summary to clipboard
+      document.getElementById('copySummaryBtn').addEventListener('click', () => {
+        const summary = generateTextSummary();
+        const textarea = document.createElement("textarea");
+        textarea.value = summary;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+          document.execCommand('copy');
+          const copyBtnText = document.getElementById('copySummaryText');
+          copyBtnText.innerText = "Copied to Clipboard!";
+          showToast("Summary copied for chat!", "📋");
+          setTimeout(() => {
+            copyBtnText.innerText = "Copy for Chat";
+          }, 2200);
+        } catch (err) {
+          showToast("Failed to copy", "❌");
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      });
+
+      renderAll();
+    });
+  </script>
+</body>
+</html>
