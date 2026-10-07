@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Poker Night Ledger &bull; Live Multi-Device Table</title>
+  <title>Poker Night Ledger &bull; Live Table</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- QRCode generation library for quick phone scanning -->
+  <!-- QRCode generation library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script>
@@ -52,7 +52,7 @@
     }
     @keyframes pulse-live {
       0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.03); opacity: 0.85; }
+      50% { transform: scale(1.05); opacity: 0.8; }
     }
     .live-pulse {
       animation: pulse-live 2s infinite ease-in-out;
@@ -61,7 +61,7 @@
 </head>
 <body class="felt-pattern min-h-screen font-sans flex flex-col justify-between selection:bg-gold-500 selection:text-black">
 
-  <header class="border-b border-felt-700/80 bg-black/80 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-lg">
+  <header class="border-b border-felt-700/80 bg-black/85 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-lg">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <!-- Logo & App Title -->
       <div class="flex items-center space-x-3">
@@ -71,12 +71,12 @@
           </div>
         </div>
         <div>
-          <h1 class="text-lg sm:text-2xl font-bold font-serif tracking-wider text-amber-100 flex items-center gap-2">
-            HIGH ROLLER <span class="text-[10px] tracking-normal font-sans font-bold bg-felt-600 border border-felt-500 text-emerald-300 px-2 py-0.5 rounded-full">LIVE SYNC</span>
+          <h1 class="text-base sm:text-xl font-bold font-serif tracking-wider text-amber-100 flex items-center gap-2">
+            HIGH ROLLER <span id="headerRoleBadge" class="text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-emerald-300 px-2 py-0.5 rounded-full">INITIALIZING</span>
           </h1>
           <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
             <span id="syncStatusIndicator" class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
-            <span id="syncStatusText">Connecting...</span>
+            <span id="syncStatusText">Connecting network...</span>
           </p>
         </div>
       </div>
@@ -85,18 +85,18 @@
       <div class="flex items-center gap-2 bg-felt-900 border border-felt-700 p-1.5 rounded-xl shadow-inner">
         <div class="px-2 py-1 text-xs">
           <span class="text-gray-400 text-[10px] block uppercase font-bold">Room Code</span>
-          <span id="currentRoomCodeLabel" class="font-mono font-bold text-gold-400 text-sm tracking-widest cursor-pointer hover:underline" title="Click to copy link">TABLE-1</span>
+          <span id="currentRoomCodeLabel" class="font-mono font-bold text-gold-400 text-sm sm:text-base tracking-widest cursor-pointer hover:underline" title="Click to copy link">TABLE1</span>
         </div>
         <button id="openShareModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-emerald-300 flex items-center gap-1 transition" title="Show QR Code & Invite Link">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
           <span class="hidden sm:inline">Invite</span>
         </button>
         <button id="openRoomModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-gray-300 transition" title="Switch or Create Room">
-          Switch Table
+          Join / Host
         </button>
       </div>
 
-      <!-- Navigation Tabs (Current Game vs All-Time Records) -->
+      <!-- Navigation Tabs (Current Table vs All-Time Records) -->
       <div class="flex items-center bg-felt-900 border border-felt-700 p-1 rounded-xl shadow-inner">
         <button id="tabGameBtn" onclick="switchTab('game')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow">
           <span>♠️</span>
@@ -104,7 +104,7 @@
         </button>
         <button id="tabRecordsBtn" onclick="switchTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
           <span>🏆</span>
-          <span>All-Time Records</span>
+          <span>Records</span>
         </button>
       </div>
     </div>
@@ -115,12 +115,12 @@
     <!-- VIEW 1: ACTIVE CURRENT GAME -->
     <div id="viewCurrentGame" class="space-y-6">
 
-      <!-- Balance & Integrity Banner (Total Buy-in = Cashouts + Rake) -->
+      <!-- Balance & Integrity Banner (Buy-ins = Cashouts + Rake) -->
       <div id="integrityBanner" class="p-4 sm:p-5 rounded-xl border transition-all duration-300 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- Host Controls: House Rake Configuration Bar -->
+      <!-- House Rake Configuration Bar (No mention of kitty or food & drink) -->
       <div class="bg-felt-900/90 border border-gold-500/30 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg">
@@ -131,7 +131,7 @@
               <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake</h3>
               <span id="rakeStatusBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400">1€ / Person</span>
             </div>
-            <p class="text-xs text-gray-400">Deducts rake per player automatically. Integrity formula checks: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
+            <p class="text-xs text-gray-400">Deducts rake per player. Verification: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
           </div>
         </div>
 
@@ -146,7 +146,7 @@
           <!-- Rake Per Person Input -->
           <div id="rakeInputsContainer" class="flex items-center gap-2">
             <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
-              <span class="text-gray-400 mr-1.5">Rake / Player:</span>
+              <span class="text-gray-400 mr-1.5">Per Player:</span>
               <span class="text-gold-400 font-semibold currencySymbol">€</span>
               <input type="number" id="rakePerPersonInput" min="0" step="0.5" value="1" class="w-12 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
             </div>
@@ -182,14 +182,14 @@
           <span class="text-[11px] text-gray-400 mt-1" id="statRakeCollectorDesc">Disabled</span>
         </div>
 
-        <!-- Live Session: Biggest Winner -->
+        <!-- Biggest Winner (Live Session) -->
         <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
           <span class="text-xs uppercase tracking-wider text-gold-400 font-semibold mb-1">Biggest Winner</span>
           <div class="text-xl sm:text-2xl font-bold text-emerald-400 truncate" id="statTopWinner">-</div>
           <span class="text-[11px] text-gray-400 mt-1" id="statTopWinnerAmt">+€0</span>
         </div>
 
-        <!-- Live Session: Biggest Loser -->
+        <!-- Biggest Loser (Live Session) -->
         <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col col-span-2 lg:col-span-1">
           <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold mb-1">Biggest Loser</span>
           <div class="text-xl sm:text-2xl font-bold text-rose-400 truncate" id="statTopLoser">-</div>
@@ -236,7 +236,7 @@
                 Optimal Settlement
               </span>
             </h2>
-            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transactions so losers pay winners directly & routes rake.</p>
+            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transfers so losers pay winners directly.</p>
           </div>
 
           <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -255,7 +255,7 @@
 
     </div>
 
-    <!-- VIEW 2: DEDICATED ALL-TIME RECORDS TAB (Nameless & No Biggest Win) -->
+    <!-- VIEW 2: DEDICATED ANONYMOUS ALL-TIME RECORDS TAB (No player names, No Biggest Win) -->
     <div id="viewAllTimeRecords" class="hidden space-y-6">
       <div class="bg-gradient-to-r from-felt-950 via-felt-900 to-felt-950 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-gold-500/20 gap-3">
@@ -334,14 +334,14 @@
         <div class="bg-felt-950/60 border border-felt-800 rounded-xl p-5">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">Manual Record Calibration</h3>
-            <span class="text-xs text-gray-400">Synchronized across cloud table</span>
+            <span class="text-xs text-gray-400">Synchronized across connected devices</span>
           </div>
 
           <form id="hofForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
               <label class="text-xs text-amber-300 font-bold block">Biggest Buy-in Amount (<span class="currencySymbol">€</span>)</label>
               <input type="number" step="any" min="0" id="hofInputBuyinAmt" class="w-full bg-felt-800 border border-felt-600 rounded px-3 py-2 text-sm text-gold-400 font-bold font-mono">
-              <input type="text" id="hofInputBuyinDate" placeholder="Date / Note (e.g. Oct 2026)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
+              <input type="text" id="hofInputBuyinDate" placeholder="Date / Note (e.g. Session #5)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
             </div>
 
             <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
@@ -370,9 +370,9 @@
   <footer class="border-t border-felt-800/80 bg-black/60 text-center py-3 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-center gap-2">
     <span>Poker Night Live Ledger</span>
     <span class="hidden sm:inline">&bull;</span>
-    <span id="footerSyncModeText">Multi-Device Cloud Mode</span>
+    <span id="footerSyncModeText">HTTP Live Sync &amp; Local Mesh</span>
     <span class="hidden sm:inline">&bull;</span>
-    <span id="footerUserId">User: Anonymous</span>
+    <span id="footerPeerCount">Room: TABLE1</span>
   </footer>
 
   <!-- Modal: Add or Edit Player -->
@@ -425,7 +425,7 @@
 
       <div class="bg-felt-950 p-2.5 rounded-lg border border-felt-700 flex items-center justify-between text-xs mb-4">
         <span class="text-gray-400 font-semibold">Room Code:</span>
-        <span id="shareModalRoomCode" class="font-mono font-bold text-gold-400 text-base tracking-wider">TABLE-1</span>
+        <span id="shareModalRoomCode" class="font-mono font-bold text-gold-400 text-base tracking-wider">TABLE1</span>
       </div>
 
       <button id="copyShareLinkBtn" onclick="copyShareableLink()" class="w-full py-2.5 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded-lg text-xs transition shadow flex items-center justify-center gap-1.5">
@@ -435,22 +435,22 @@
     </div>
   </div>
 
-  <!-- Modal: Switch or Create Room -->
+  <!-- Modal: Switch or Host Room -->
   <div id="roomModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-felt-900 border border-felt-600 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
       <button onclick="closeModal('roomModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
-      <h3 class="text-lg font-bold font-serif text-amber-200 mb-3">Join or Create Table</h3>
-      <p class="text-xs text-gray-400 mb-4">Enter a 4-8 letter room name (e.g. <span class="font-mono text-gold-400">POKER-NIGHT</span>) to connect your phones to the same table.</p>
+      <h3 class="text-lg font-bold font-serif text-amber-200 mb-2">Join or Host Table</h3>
+      <p class="text-xs text-gray-400 mb-4">Enter a 4-8 letter room name to connect phones in real time with zero setup.</p>
 
       <form id="roomForm" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room / Table Code</label>
-          <input type="text" id="inputRoomCode" required placeholder="e.g. FRIDAY-GAME" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room Code</label>
+          <input type="text" id="inputRoomCode" required placeholder="e.g. TABLE1" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
         </div>
 
         <div class="flex gap-2">
-          <button type="button" onclick="generateRandomRoomCode()" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold transition border border-felt-600">Random Code</button>
-          <button type="submit" class="w-1/2 py-2 bg-gradient-to-r from-gold-600 to-amber-500 hover:from-gold-500 text-black rounded-lg text-xs font-bold transition shadow">Join Table</button>
+          <button type="button" onclick="generateRandomRoomCode()" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold transition border border-felt-600">New Code</button>
+          <button type="submit" class="w-1/2 py-2 bg-gradient-to-r from-gold-600 to-amber-500 hover:from-gold-500 text-black rounded-lg text-xs font-bold transition shadow">Enter Room</button>
         </div>
       </form>
     </div>
@@ -462,27 +462,7 @@
     <span id="toastMsg">Notification</span>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global Firebase setup compliant with Rules 1, 2, and 3
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'poker-ledger-v1';
-    let firebaseConfig = null;
-    let db = null;
-    let auth = null;
-    let currentUser = null;
-    let firestoreUnsubscribe = null;
-
-    try {
-      if (typeof __firebase_config !== 'undefined') {
-        firebaseConfig = JSON.parse(__firebase_config);
-      }
-    } catch(e) {
-      console.warn("No global __firebase_config found, fallback will be used.");
-    }
-
+  <script>
     const COLOR_PRESETS = [
       { name: 'Emerald', bg: 'bg-emerald-600', hex: '#059669' },
       { name: 'Ruby', bg: 'bg-rose-600', hex: '#e11d48' },
@@ -492,178 +472,239 @@
       { name: 'Slate', bg: 'bg-gray-600', hex: '#4b5563' }
     ];
 
-    // Read room from URL query ?room=XYZ or default
+    // Read room code from URL query ?room=XYZ or default to TABLE1
     const urlParams = new URLSearchParams(window.location.search);
-    let activeRoomId = (urlParams.get('room') || 'TABLE-1').toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'TABLE-1';
+    let activeRoomCode = (urlParams.get('room') || 'TABLE1').toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'TABLE1';
 
-    // Current claimed seat on this device
-    let claimedPlayerId = localStorage.getItem(`claimed_seat_${activeRoomId}`) || null;
-
+    let claimedPlayerId = localStorage.getItem(`claimed_seat_${activeRoomCode}`) || null;
     let currentTab = 'game';
     let selectedColor = COLOR_PRESETS[0].hex;
-    let isRemoteUpdate = false;
 
-    // Central Live Table State
+    // Cross-tab and HTTP Server-Sent Event / Polling State
+    let localChannel = null;
+    let eventSource = null;
+    let pollInterval = null;
+    let isBroadcasting = false;
+
+    // Application state
     window.tableState = {
-      room: activeRoomId,
+      room: activeRoomCode,
       currency: '€',
       defaultBuyin: 20,
       rakeEnabled: true,
       rakePerPerson: 1,
-      rakeCollector: '1',
+      rakeCollector: 'HOUSE',
       players: [
-        { id: '1', name: 'Alex (Host)', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '1', name: 'Alex', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
         { id: '2', name: 'Sarah', color: COLOR_PRESETS[1].hex, buyins: [20], cashout: 0, hasCashedOut: false },
         { id: '3', name: 'Dave', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false }
       ],
-      // Anonymous historical milestones (No player names, No Biggest Win)
+      // Anonymous historical records (No player names, No Biggest Win)
       allTimeRecords: {
         biggestBuyin: { amount: 60, date: 'Oct 2026' },
         biggestLoss: { amount: 41, date: 'Sep 2026' },
         totalSessions: 3
       },
-      lastUpdatedBy: 'init',
-      lastUpdatedAt: Date.now()
+      version: 1,
+      lastUpdated: Date.now()
     };
-
-    // Initialize Auth & Firestore
-    async function initFirebase() {
-      const syncStatusText = document.getElementById('syncStatusText');
-      const syncStatusIndicator = document.getElementById('syncStatusIndicator');
-      const footerMode = document.getElementById('footerSyncModeText');
-      const footerUser = document.getElementById('footerUserId');
-
-      if (!firebaseConfig) {
-        syncStatusText.innerText = "Offline / Local Mode";
-        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-blue-400";
-        footerMode.innerText = "Local Device Mode";
-        loadFromLocalStorage();
-        renderAll();
-        return;
-      }
-
-      try {
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        // Mandatory Rule 3: Auth before queries
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-
-        currentUser = auth.currentUser;
-        footerUser.innerText = `User: ${currentUser ? currentUser.uid : 'anon'}`;
-        syncStatusText.innerText = "Cloud Live Synced";
-        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-        footerMode.innerText = `Room: ${activeRoomId} (Live Cloud)`;
-
-        subscribeToRoom(activeRoomId);
-
-      } catch (err) {
-        console.error("Firebase init fallback to local:", err);
-        syncStatusText.innerText = "Local Storage (Cloud Offline)";
-        syncStatusIndicator.className = "inline-block w-2 h-2 rounded-full bg-amber-400";
-        loadFromLocalStorage();
-        renderAll();
-      }
-    }
-
-    // Mandatory Rule 1: Strict public data path: /artifacts/{appId}/public/data/{collectionName}/{documentId}
-    function subscribeToRoom(roomId) {
-      if (firestoreUnsubscribe) {
-        firestoreUnsubscribe();
-      }
-
-      if (!db || !currentUser) {
-        loadFromLocalStorage();
-        renderAll();
-        return;
-      }
-
-      const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'tables', roomId);
-
-      firestoreUnsubscribe = onSnapshot(roomDocRef, (snap) => {
-        if (snap.exists()) {
-          const cloudData = snap.data();
-          if (cloudData) {
-            isRemoteUpdate = true;
-            window.tableState = {
-              ...window.tableState,
-              ...cloudData,
-              allTimeRecords: {
-                biggestBuyin: { 
-                  amount: cloudData.allTimeRecords?.biggestBuyin?.amount || 0,
-                  date: cloudData.allTimeRecords?.biggestBuyin?.date || ''
-                },
-                biggestLoss: { 
-                  amount: cloudData.allTimeRecords?.biggestLoss?.amount || 0,
-                  date: cloudData.allTimeRecords?.biggestLoss?.date || ''
-                },
-                totalSessions: cloudData.allTimeRecords?.totalSessions || 0
-              }
-            };
-            renderAll();
-            isRemoteUpdate = false;
-          }
-        } else {
-          // If first time creating this room in cloud, initialize with current table state
-          broadcastCloudUpdate();
-        }
-      }, (error) => {
-        console.error("Firestore onSnapshot error:", error);
-        showToast("Cloud sync connection disrupted", "⚠️");
-      });
-    }
-
-    async function broadcastCloudUpdate() {
-      // Save local backup first
-      saveToLocalStorage();
-
-      if (!db || !currentUser) {
-        renderAll();
-        return;
-      }
-
-      try {
-        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'tables', activeRoomId);
-        window.tableState.lastUpdatedBy = currentUser.uid;
-        window.tableState.lastUpdatedAt = Date.now();
-
-        await setDoc(roomDocRef, {
-          room: activeRoomId,
-          currency: window.tableState.currency,
-          defaultBuyin: window.tableState.defaultBuyin,
-          rakeEnabled: window.tableState.rakeEnabled,
-          rakePerPerson: window.tableState.rakePerPerson,
-          rakeCollector: window.tableState.rakeCollector,
-          players: window.tableState.players,
-          allTimeRecords: window.tableState.allTimeRecords,
-          lastUpdatedBy: currentUser.uid,
-          lastUpdatedAt: Date.now()
-        }, { merge: true });
-
-      } catch (err) {
-        console.error("Error writing to Firestore:", err);
-      }
-    }
 
     function saveToLocalStorage() {
       try {
-        localStorage.setItem(`poker_table_${activeRoomId}`, JSON.stringify(window.tableState));
+        localStorage.setItem(`poker_table_${activeRoomCode}`, JSON.stringify(window.tableState));
       } catch (e) {}
     }
 
     function loadFromLocalStorage() {
       try {
-        const local = localStorage.getItem(`poker_table_${activeRoomId}`);
+        const local = localStorage.getItem(`poker_table_${activeRoomCode}`);
         if (local) {
           const parsed = JSON.parse(local);
-          window.tableState = { ...window.tableState, ...parsed };
+          if (parsed && typeof parsed === 'object') {
+            window.tableState = { ...window.tableState, ...parsed };
+          }
         }
       } catch (e) {}
+    }
+
+    function setSyncStatus(isLive, message) {
+      const syncStatusText = document.getElementById('syncStatusText');
+      const syncStatusIndicator = document.getElementById('syncStatusIndicator');
+      const roleBadge = document.getElementById('headerRoleBadge');
+      const footerMode = document.getElementById('footerSyncModeText');
+      const footerPeers = document.getElementById('footerPeerCount');
+
+      if (syncStatusText) syncStatusText.innerText = message;
+      if (syncStatusIndicator) {
+        syncStatusIndicator.className = isLive 
+          ? "inline-block w-2 h-2 rounded-full bg-emerald-400" 
+          : "inline-block w-2 h-2 rounded-full bg-amber-400";
+      }
+      if (roleBadge) {
+        roleBadge.innerText = isLive ? "LIVE SYNC" : "LOCAL";
+        roleBadge.className = isLive 
+          ? "text-[10px] tracking-normal font-sans font-bold bg-emerald-950/80 border border-emerald-500 text-emerald-300 px-2 py-0.5 rounded-full" 
+          : "text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-amber-300 px-2 py-0.5 rounded-full";
+      }
+      if (footerMode) footerMode.innerText = isLive ? "Cloud Live Sync Active" : "Local Mode (Offline Safe)";
+      if (footerPeers) footerPeers.innerText = `Room: ${activeRoomCode}`;
+    }
+
+    function applyRemoteState(incomingState) {
+      if (!incomingState || typeof incomingState !== 'object') return;
+      if (incomingState.room && incomingState.room !== activeRoomCode) return;
+
+      const currentVer = window.tableState.version || 0;
+      const incomingVer = incomingState.version || 0;
+
+      // Only apply if incoming state is newer or same version with updated timestamp
+      if (incomingVer > currentVer || (incomingVer === currentVer && (incomingState.lastUpdated || 0) > (window.tableState.lastUpdated || 0))) {
+        window.tableState = {
+          ...window.tableState,
+          ...incomingState
+        };
+        saveToLocalStorage();
+        renderAll();
+      }
+    }
+
+    // Initialize BroadcastChannel (for instant multi-tab sync on same origin) + HTTP Sync (for multi-device)
+    function initSyncNetwork() {
+      loadFromLocalStorage();
+      renderAll();
+
+      // 1. Instant Local Mesh (for tabs on the same computer or phone)
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          localChannel = new BroadcastChannel(`poker_channel_${activeRoomCode}`);
+          localChannel.onmessage = (event) => {
+            if (event.data && event.data.payload) {
+              applyRemoteState(event.data.payload);
+            }
+          };
+        }
+      } catch (e) {
+        console.warn("BroadcastChannel not supported", e);
+      }
+
+      // Storage event listener as fallback for cross-tab sync
+      window.addEventListener('storage', (e) => {
+        if (e.key === `poker_table_${activeRoomCode}` && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            applyRemoteState(data);
+          } catch(err) {}
+        }
+      });
+
+      // 2. Multi-device sync using keyless HTTP/SSE (Zero WebSockets to prevent Canvas restrictions)
+      const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
+      
+      // Fetch recent messages on launch to catch up with friends
+      fetch(`https://ntfy.sh/${topic}/json?poll=1&since=12h`, { cache: 'no-store' })
+        .then(res => res.text())
+        .then(text => {
+          if (!text) return;
+          const lines = text.trim().split('\n');
+          lines.forEach(line => {
+            try {
+              const obj = JSON.parse(line);
+              if (obj && obj.message) {
+                const parsedState = JSON.parse(obj.message);
+                applyRemoteState(parsedState);
+              }
+            } catch(e) {}
+          });
+          setSyncStatus(true, "Connected to Table");
+        })
+        .catch(() => {
+          setSyncStatus(false, "Local Mode (Ready)");
+        });
+
+      // Connect via Server-Sent Events (SSE) - Pure HTTP stream
+      try {
+        if (typeof EventSource !== 'undefined') {
+          eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+          eventSource.onopen = () => {
+            setSyncStatus(true, "Live Synced (Multi-Device)");
+          };
+          eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data && data.message) {
+                const remoteState = JSON.parse(data.message);
+                applyRemoteState(remoteState);
+              }
+            } catch(e) {}
+          };
+          eventSource.onerror = () => {
+            // If SSE fails or is restricted, fallback to light HTTP polling
+            if (!pollInterval) {
+              startHttpPolling(topic);
+            }
+          };
+        } else {
+          startHttpPolling(topic);
+        }
+      } catch(e) {
+        startHttpPolling(topic);
+      }
+    }
+
+    function startHttpPolling(topic) {
+      if (pollInterval) return;
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=8s`, { cache: 'no-store' });
+          if (res.ok) {
+            const text = await res.text();
+            if (text) {
+              const lines = text.trim().split('\n');
+              lines.forEach(line => {
+                try {
+                  const obj = JSON.parse(line);
+                  if (obj && obj.message) {
+                    applyRemoteState(JSON.parse(obj.message));
+                  }
+                } catch(e) {}
+              });
+            }
+            setSyncStatus(true, "Live Synced (HTTP)");
+          }
+        } catch(e) {
+          setSyncStatus(false, "Local Mode (Offline Safe)");
+        }
+      }, 4000);
+    }
+
+    async function broadcastStateChange() {
+      window.tableState.version = (window.tableState.version || 0) + 1;
+      window.tableState.lastUpdated = Date.now();
+      saveToLocalStorage();
+      renderAll();
+
+      // 1. Broadcast locally
+      if (localChannel) {
+        try {
+          localChannel.postMessage({ type: 'STATE_UPDATE', payload: window.tableState });
+        } catch (e) {}
+      }
+
+      // 2. Broadcast to friends over HTTPS POST (CORS enabled, keyless)
+      const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
+      try {
+        await fetch(`https://ntfy.sh/${topic}`, {
+          method: 'POST',
+          headers: {
+            'Title': `Poker Table ${activeRoomCode}`,
+            'Tags': 'poker'
+          },
+          body: JSON.stringify(window.tableState)
+        });
+        setSyncStatus(true, "Live Synced (Multi-Device)");
+      } catch (err) {
+        console.log("Local offline saved", err);
+      }
     }
 
     function calculateTotals() {
@@ -703,7 +744,6 @@
       return Math.round(net * 100) / 100;
     }
 
-    // Sync records anonymously without tracking or showing player names
     function syncAllTimeRecordsFromCurrent() {
       let updated = false;
       const today = new Date().toLocaleDateString();
@@ -743,7 +783,7 @@
         net: getPlayerNet(p)
       }));
 
-      if (window.tableState.rakeEnabled && (window.tableState.rakeCollector === 'HOUSE' || window.tableState.rakeCollector === 'KITTY') && totalRakePool > 0) {
+      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === 'HOUSE' && totalRakePool > 0) {
         balances.push({
           id: 'HOUSE_ACCOUNT',
           name: '🏦 House Rake Account',
@@ -801,7 +841,7 @@
             <span class="text-2xl">🃏</span>
             <div>
               <h3 class="font-bold text-gray-200">Table is Empty</h3>
-              <p class="text-xs text-gray-400">Add players or invite your buddies with the Room Code.</p>
+              <p class="text-xs text-gray-400">Add players or invite your buddies with Room Code <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
             </div>
           </div>
         `;
@@ -842,10 +882,10 @@
             <div>
               <div class="flex items-center gap-2">
                 <h3 class="font-bold text-base sm:text-lg text-amber-300">Unaccounted Chips: Missing ${window.tableState.currency}${missing.toFixed(2)}</h3>
-                <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/30">${allCashedOut ? 'Discrepancy' : 'Live Game Active'}</span>
+                <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/30">${allCashedOut ? 'Discrepancy' : 'Live Game'}</span>
               </div>
               <p class="text-xs text-gray-300 mt-0.5">
-                Buy-ins exceed Cash-outs${rakeText}. ${allCashedOut ? 'Count chips again or check for dropped chips.' : 'Players still need to enter their cashout chip stack.'}
+                Buy-ins exceed Cash-outs${rakeText}. ${allCashedOut ? 'Count chip stacks again or check table felt.' : 'Players still need to enter their cashout chip stack.'}
               </p>
             </div>
           </div>
@@ -908,7 +948,7 @@
         }
         collectorSelect.appendChild(opt);
       });
-      if (currentSelected === 'HOUSE' || currentSelected === 'KITTY') {
+      if (currentSelected === 'HOUSE') {
         collectorSelect.value = 'HOUSE';
       }
     }
@@ -927,7 +967,7 @@
       if (window.tableState.rakeEnabled) {
         statRake.innerText = `${window.tableState.currency}${totalRake.toFixed(2)}`;
         let collectorName = 'House Account';
-        if (window.tableState.rakeCollector !== 'HOUSE' && window.tableState.rakeCollector !== 'KITTY') {
+        if (window.tableState.rakeCollector !== 'HOUSE') {
           const colPlayer = window.tableState.players.find(p => p.id === window.tableState.rakeCollector);
           if (colPlayer) collectorName = `${colPlayer.name} (Host)`;
         }
@@ -937,7 +977,7 @@
         statRakeDesc.innerText = 'Rake turned off';
       }
 
-      // Live Session "Biggest Winner" and "Biggest Loser"
+      // Live Session Biggest Winner / Loser
       let maxWin = 0;
       let topWinner = null;
       let maxLoss = 0;
@@ -979,7 +1019,6 @@
         el.innerText = window.tableState.currency;
       });
 
-      // Claimed Badge in Header
       const claimedBadge = document.getElementById('myClaimedBadge');
       if (claimedPlayerId) {
         const myP = window.tableState.players.find(p => p.id === claimedPlayerId);
@@ -1003,7 +1042,7 @@
           <div class="col-span-full py-12 text-center text-gray-400 bg-felt-900/40 rounded-2xl border border-dashed border-felt-700">
             <span class="text-4xl block mb-2">♠</span>
             <p class="text-base font-semibold text-gray-300">No players seated at this table</p>
-            <p class="text-xs text-gray-500 mt-1">Tap "Add Player" or invite friends with Room Code <span class="font-mono text-gold-400">${activeRoomId}</span>.</p>
+            <p class="text-xs text-gray-500 mt-1">Tap "Add Player" or invite friends with Room Code <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
           </div>
         `;
         return;
@@ -1075,7 +1114,7 @@
               </div>
             </div>
 
-            <!-- Buyin & Quick Rebuy Buttons -->
+            <!-- Buyin & Quick Rebuy Buttons (+20€ Prioritized) -->
             <div class="mt-3.5 space-y-2">
               <div class="flex justify-between items-center text-xs">
                 <span class="text-gray-400">Total Buy-in:</span>
@@ -1099,7 +1138,7 @@
               <div class="bg-felt-950/60 p-2 rounded-lg border border-felt-800 flex items-center justify-between gap-1">
                 <span class="text-[11px] text-gray-400 font-medium">Rebuy:</span>
                 <div class="flex items-center gap-1">
-                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2.5 py-0.5 bg-gold-600 hover:bg-gold-500 text-black rounded text-[11px] font-bold border border-gold-400 transition shadow" title="Default Rebuy">
+                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2.5 py-0.5 bg-gold-600 hover:bg-gold-500 text-black rounded text-[11px] font-bold border border-gold-400 transition shadow" title="Default €20 Rebuy">
                     +${window.tableState.currency}20
                   </button>
                   <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
@@ -1237,8 +1276,8 @@
     }
 
     function renderAll() {
-      document.getElementById('currentRoomCodeLabel').innerText = activeRoomId;
-      document.getElementById('shareModalRoomCode').innerText = activeRoomId;
+      document.getElementById('currentRoomCodeLabel').innerText = activeRoomCode;
+      document.getElementById('shareModalRoomCode').innerText = activeRoomCode;
 
       renderIntegrityBanner();
       renderRakeControls();
@@ -1254,11 +1293,11 @@
     window.claimSeat = function(playerId) {
       if (claimedPlayerId === playerId) {
         claimedPlayerId = null;
-        localStorage.removeItem(`claimed_seat_${activeRoomId}`);
+        localStorage.removeItem(`claimed_seat_${activeRoomCode}`);
         showToast("Seat unlinked from this device", "👤");
       } else {
         claimedPlayerId = playerId;
-        localStorage.setItem(`claimed_seat_${activeRoomId}`, playerId);
+        localStorage.setItem(`claimed_seat_${activeRoomCode}`, playerId);
         const p = window.tableState.players.find(x => x.id === playerId);
         showToast(`You are now seated as ${p ? p.name : 'Player'}!`, "🎯");
       }
@@ -1270,20 +1309,20 @@
       if (!p) return;
       p.buyins.push(amount);
       syncAllTimeRecordsFromCurrent();
-      broadcastCloudUpdate();
+      broadcastStateChange();
       showToast(`${p.name} rebought +${window.tableState.currency}${amount}`, "🪙");
     };
 
     window.promptCustomBuyin = function(playerId) {
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p) return;
-      const val = prompt(`Enter custom buy-in amount for ${p.name}:`, window.tableState.defaultBuyin);
+      const val = prompt(`Enter custom buy-in amount for ${p.name}:`, window.tableState.defaultBuyin || 20);
       if (val !== null) {
         const num = parseFloat(val);
         if (!isNaN(num) && num > 0) {
           p.buyins.push(num);
           syncAllTimeRecordsFromCurrent();
-          broadcastCloudUpdate();
+          broadcastStateChange();
           showToast(`${p.name} added ${window.tableState.currency}${num}`, "🪙");
         }
       }
@@ -1293,7 +1332,7 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p || p.buyins.length <= 1) return;
       const removed = p.buyins.pop();
-      broadcastCloudUpdate();
+      broadcastStateChange();
       showToast(`Removed last rebuy of ${window.tableState.currency}${removed} for ${p.name}`, "↩️");
     };
 
@@ -1311,7 +1350,7 @@
       }
 
       syncAllTimeRecordsFromCurrent();
-      broadcastCloudUpdate();
+      broadcastStateChange();
     };
 
     window.removePlayer = function(playerId) {
@@ -1325,9 +1364,9 @@
         }
         if (claimedPlayerId === playerId) {
           claimedPlayerId = null;
-          localStorage.removeItem(`claimed_seat_${activeRoomId}`);
+          localStorage.removeItem(`claimed_seat_${activeRoomCode}`);
         }
-        broadcastCloudUpdate();
+        broadcastStateChange();
         showToast(`${p.name} removed`, "🗑️");
       }
     };
@@ -1355,7 +1394,7 @@
         return;
       }
 
-      const confirmArchive = confirm("Archive this game night? This will finalize all-time records (Biggest Buy-in & Biggest Loss Ever), increment total sessions played, and reset stacks for the next game.");
+      const confirmArchive = confirm("Archive this game night? This will finalize all-time records (Biggest Buy-in & Biggest Loss Ever), increment total sessions played, and reset stacks to €20 for the next game.");
       if (!confirmArchive) return;
 
       syncAllTimeRecordsFromCurrent();
@@ -1369,9 +1408,9 @@
         hasCashedOut: false
       }));
 
-      broadcastCloudUpdate();
+      broadcastStateChange();
       renderRecordsTab();
-      showToast("Session archived! All-time records updated across all devices.", "🏆");
+      showToast("Session archived! Records updated across all connected devices.", "🏆");
     };
 
     window.resetAllTimeRecords = function() {
@@ -1381,7 +1420,7 @@
           biggestLoss: { amount: 0, date: '' },
           totalSessions: 0
         };
-        broadcastCloudUpdate();
+        broadcastStateChange();
         renderRecordsTab();
         showToast("Historical records reset to zero", "🔄");
       }
@@ -1414,7 +1453,7 @@
 
     window.copyShareableLink = function() {
       const url = new URL(window.location.href);
-      url.searchParams.set('room', activeRoomId);
+      url.searchParams.set('room', activeRoomCode);
       const textToCopy = url.toString();
 
       const textarea = document.createElement("textarea");
@@ -1451,7 +1490,7 @@
       const qrContainer = document.getElementById('qrcodeCanvas');
       qrContainer.innerHTML = '';
       const url = new URL(window.location.href);
-      url.searchParams.set('room', activeRoomId);
+      url.searchParams.set('room', activeRoomCode);
 
       try {
         new QRCode(qrContainer, {
@@ -1531,7 +1570,7 @@
       const rec = window.tableState.allTimeRecords;
 
       let text = `♠ *POKER NIGHT LIVE LEDGER* ♠️\n`;
-      text += `🏷️ Room: ${activeRoomId}\n`;
+      text += `🏷️ Room: ${activeRoomCode}\n`;
       text += `📅 Date: ${new Date().toLocaleDateString()}\n`;
       text += `💰 Total Buy-ins: ${window.tableState.currency}${totalBuyins.toFixed(2)}\n`;
       text += `🪙 Total Cashed Out: ${window.tableState.currency}${totalCashouts.toFixed(2)}\n`;
@@ -1570,7 +1609,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       initColorPicker();
-      initFirebase();
+      initSyncNetwork();
 
       // Share Modal QR Generator
       document.getElementById('openShareModalBtn').addEventListener('click', () => {
@@ -1580,7 +1619,7 @@
 
       // Room modal trigger
       document.getElementById('openRoomModalBtn').addEventListener('click', () => {
-        document.getElementById('inputRoomCode').value = activeRoomId;
+        document.getElementById('inputRoomCode').value = activeRoomCode;
         document.getElementById('roomModal').classList.remove('hidden');
       });
 
@@ -1600,14 +1639,14 @@
         window.copyShareableLink();
       });
 
-      // Default Buyin Input
+      // Default Buyin Input (€20 default)
       const defBuyinInput = document.getElementById('defaultBuyinInput');
       defBuyinInput.value = window.tableState.defaultBuyin || 20;
       defBuyinInput.addEventListener('change', (e) => {
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && val > 0) {
           window.tableState.defaultBuyin = val;
-          broadcastCloudUpdate();
+          broadcastStateChange();
         }
       });
 
@@ -1615,7 +1654,7 @@
       const rakeToggle = document.getElementById('rakeToggle');
       rakeToggle.addEventListener('change', (e) => {
         window.tableState.rakeEnabled = e.target.checked;
-        broadcastCloudUpdate();
+        broadcastStateChange();
         showToast(window.tableState.rakeEnabled ? "House Rake enabled" : "Rake disabled", "🏦");
       });
 
@@ -1624,14 +1663,14 @@
       rakeInput.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         window.tableState.rakePerPerson = isNaN(val) ? 0 : val;
-        broadcastCloudUpdate();
+        broadcastStateChange();
       });
 
       // Rake Collector Select
       const collectorSelect = document.getElementById('rakeCollectorSelect');
       collectorSelect.addEventListener('change', (e) => {
         window.tableState.rakeCollector = e.target.value;
-        broadcastCloudUpdate();
+        broadcastStateChange();
       });
 
       // Add Player Button
@@ -1663,12 +1702,12 @@
           if (existing) {
             existing.name = name;
             existing.color = selectedColor;
-            broadcastCloudUpdate();
+            broadcastStateChange();
             window.closeModal('playerModal');
             showToast(`Updated player "${name}"`, "✏️");
           }
         } else {
-          const buyin = parseFloat(document.getElementById('modalInitialBuyin').value) || 0;
+          const buyin = parseFloat(document.getElementById('modalInitialBuyin').value) || 20;
           const newPlayer = {
             id: Date.now().toString(),
             name: name,
@@ -1679,7 +1718,7 @@
           };
           window.tableState.players.push(newPlayer);
           syncAllTimeRecordsFromCurrent();
-          broadcastCloudUpdate();
+          broadcastStateChange();
           window.closeModal('playerModal');
           showToast(`${name} added to the table`, "🎲");
         }
@@ -1697,7 +1736,7 @@
           date: document.getElementById('hofInputLossDate').value.trim()
         };
 
-        broadcastCloudUpdate();
+        broadcastStateChange();
         renderRecordsTab();
         showToast("All-Time Records saved", "🏆");
       });
