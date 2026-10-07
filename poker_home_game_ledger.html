@@ -120,7 +120,7 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- Host Controls: Rake & House Fee Configuration Bar -->
+      <!-- Host Controls: House Rake Configuration Bar -->
       <div class="bg-felt-900/90 border border-gold-500/30 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg">
@@ -128,10 +128,10 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake / Kitty / Food & Drink Fee</h3>
+              <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake</h3>
               <span id="rakeStatusBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400">1€ / Person</span>
             </div>
-            <p class="text-xs text-gray-400">Deducts table fee per player automatically. Integrity formula checks: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
+            <p class="text-xs text-gray-400">Deducts rake per player automatically. Integrity formula checks: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
           </div>
         </div>
 
@@ -140,13 +140,13 @@
           <label class="flex items-center cursor-pointer select-none">
             <input type="checkbox" id="rakeToggle" class="sr-only peer">
             <div class="w-10 h-6 bg-felt-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500 relative border border-felt-600"></div>
-            <span class="ml-2 text-xs font-semibold text-gray-300">Enable Fee</span>
+            <span class="ml-2 text-xs font-semibold text-gray-300">Enable Rake</span>
           </label>
 
           <!-- Rake Per Person Input -->
           <div id="rakeInputsContainer" class="flex items-center gap-2">
             <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
-              <span class="text-gray-400 mr-1.5">Fee / Player:</span>
+              <span class="text-gray-400 mr-1.5">Rake / Player:</span>
               <span class="text-gold-400 font-semibold currencySymbol">€</span>
               <input type="number" id="rakePerPersonInput" min="0" step="0.5" value="1" class="w-12 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
             </div>
@@ -155,7 +155,7 @@
             <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2 py-1 text-xs">
               <span class="text-gray-400 mr-1.5">Collector:</span>
               <select id="rakeCollectorSelect" class="bg-felt-700 text-gold-300 font-semibold rounded px-1.5 py-0.5 focus:outline-none">
-                <option value="KITTY">Separate Kitty / Pot</option>
+                <option value="HOUSE">House Account</option>
               </select>
             </div>
           </div>
@@ -177,7 +177,7 @@
         </div>
 
         <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
-          <span class="text-xs uppercase tracking-wider text-amber-400/80 font-semibold mb-1">Rake / Kitty</span>
+          <span class="text-xs uppercase tracking-wider text-amber-400/80 font-semibold mb-1">House Rake</span>
           <div class="text-xl sm:text-2xl font-bold text-gold-400" id="statTotalRake">€0</div>
           <span class="text-[11px] text-gray-400 mt-1" id="statRakeCollectorDesc">Disabled</span>
         </div>
@@ -236,7 +236,7 @@
                 Optimal Settlement
               </span>
             </h2>
-            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transactions so losers pay winners directly & routes rake/kitty.</p>
+            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transactions so losers pay winners directly & routes rake.</p>
           </div>
 
           <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -513,7 +513,7 @@
       rakeCollector: '1',
       players: [
         { id: '1', name: 'Alex (Host)', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '2', name: 'Sarah', color: COLOR_PRESETS[1].hex, buyins: [20, 20], cashout: 0, hasCashedOut: false },
+        { id: '2', name: 'Sarah', color: COLOR_PRESETS[1].hex, buyins: [20], cashout: 0, hasCashedOut: false },
         { id: '3', name: 'Dave', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false }
       ],
       // Anonymous historical milestones (No player names, No Biggest Win)
@@ -692,13 +692,13 @@
 
     function getPlayerNet(player) {
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
-      const totalRakePot = window.tableState.players.length * perPersonRake;
+      const totalRakePool = window.tableState.players.length * perPersonRake;
       const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
       const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
 
       let net = cash - totalBuy - perPersonRake;
       if (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id) {
-        net += totalRakePot;
+        net += totalRakePool;
       }
       return Math.round(net * 100) / 100;
     }
@@ -735,7 +735,7 @@
 
     function computeOptimalSettlement() {
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
-      const totalRakePot = window.tableState.players.length * perPersonRake;
+      const totalRakePool = window.tableState.players.length * perPersonRake;
 
       const balances = window.tableState.players.map(p => ({
         id: p.id,
@@ -743,11 +743,11 @@
         net: getPlayerNet(p)
       }));
 
-      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === 'KITTY' && totalRakePot > 0) {
+      if (window.tableState.rakeEnabled && (window.tableState.rakeCollector === 'HOUSE' || window.tableState.rakeCollector === 'KITTY') && totalRakePool > 0) {
         balances.push({
-          id: 'KITTY_POT',
-          name: '🏦 House Kitty / Pot',
-          net: Math.round(totalRakePot * 100) / 100
+          id: 'HOUSE_ACCOUNT',
+          name: '🏦 House Rake Account',
+          net: Math.round(totalRakePool * 100) / 100
         });
       }
 
@@ -898,7 +898,7 @@
       }
 
       const currentSelected = window.tableState.rakeCollector;
-      collectorSelect.innerHTML = `<option value="KITTY">Separate Kitty / Pot</option>`;
+      collectorSelect.innerHTML = `<option value="HOUSE">House Account</option>`;
       window.tableState.players.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
@@ -908,8 +908,8 @@
         }
         collectorSelect.appendChild(opt);
       });
-      if (currentSelected === 'KITTY') {
-        collectorSelect.value = 'KITTY';
+      if (currentSelected === 'HOUSE' || currentSelected === 'KITTY') {
+        collectorSelect.value = 'HOUSE';
       }
     }
 
@@ -926,8 +926,8 @@
       const statRakeDesc = document.getElementById('statRakeCollectorDesc');
       if (window.tableState.rakeEnabled) {
         statRake.innerText = `${window.tableState.currency}${totalRake.toFixed(2)}`;
-        let collectorName = 'Separate Kitty';
-        if (window.tableState.rakeCollector !== 'KITTY') {
+        let collectorName = 'House Account';
+        if (window.tableState.rakeCollector !== 'HOUSE' && window.tableState.rakeCollector !== 'KITTY') {
           const colPlayer = window.tableState.players.find(p => p.id === window.tableState.rakeCollector);
           if (colPlayer) collectorName = `${colPlayer.name} (Host)`;
         }
@@ -1010,7 +1010,7 @@
       }
 
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
-      const totalRakePot = window.tableState.players.length * perPersonRake;
+      const totalRakePool = window.tableState.players.length * perPersonRake;
 
       window.tableState.players.forEach((p) => {
         const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
@@ -1084,13 +1084,13 @@
 
               ${window.tableState.rakeEnabled ? `
                 <div class="flex justify-between items-center text-xs text-gold-400/90 bg-gold-950/30 px-2 py-1 rounded border border-gold-500/20">
-                  <span>Table Fee / Rake Paid:</span>
+                  <span>House Rake Paid:</span>
                   <span class="font-mono font-semibold">-${window.tableState.currency}${perPersonRake.toFixed(2)}</span>
                 </div>
                 ${isCollector ? `
                   <div class="flex justify-between items-center text-xs text-emerald-400 bg-emerald-950/30 px-2 py-1 rounded border border-emerald-500/20">
-                    <span>House Pot Collected:</span>
-                    <span class="font-mono font-semibold">+${window.tableState.currency}${totalRakePot.toFixed(2)}</span>
+                    <span>House Rake Collected:</span>
+                    <span class="font-mono font-semibold">+${window.tableState.currency}${totalRakePool.toFixed(2)}</span>
                   </div>
                 ` : ''}
               ` : ''}
@@ -1099,11 +1099,11 @@
               <div class="bg-felt-950/60 p-2 rounded-lg border border-felt-800 flex items-center justify-between gap-1">
                 <span class="text-[11px] text-gray-400 font-medium">Rebuy:</span>
                 <div class="flex items-center gap-1">
+                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2.5 py-0.5 bg-gold-600 hover:bg-gold-500 text-black rounded text-[11px] font-bold border border-gold-400 transition shadow" title="Default Rebuy">
+                    +${window.tableState.currency}20
+                  </button>
                   <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
                     +${window.tableState.currency}10
-                  </button>
-                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
-                    +${window.tableState.currency}20
                   </button>
                   <button onclick="window.promptCustomBuyin('${p.id}')" class="px-2 py-0.5 bg-amber-950/60 hover:bg-amber-900 text-amber-300 rounded text-[11px] font-semibold border border-amber-800/80 transition" title="Custom Buyin">
                     +Custom
@@ -1192,7 +1192,7 @@
       }
 
       transactions.forEach((tx) => {
-        const isHouseTarget = tx.to.includes('House Kitty');
+        const isHouseTarget = tx.to.includes('House Rake');
         const item = document.createElement('div');
         item.className = `border rounded-xl p-3 sm:p-4 flex items-center justify-between shadow hover:border-gold-500/40 transition ${isHouseTarget ? 'bg-amber-950/20 border-gold-500/40' : 'bg-felt-800/90 border-felt-700/90'}`;
         item.innerHTML = `
@@ -1206,7 +1206,7 @@
                 <span class="text-gray-400 text-xs mx-1">pays</span>
                 <span class="${isHouseTarget ? 'text-gold-300' : 'text-emerald-400'} font-bold">${escapeHtml(tx.to)}</span>
               </div>
-              <p class="text-[11px] text-gray-400">${isHouseTarget ? 'Table fee / Kitty contribution' : 'Direct player payout'}</p>
+              <p class="text-[11px] text-gray-400">${isHouseTarget ? 'House Rake contribution' : 'Direct player payout'}</p>
             </div>
           </div>
           <div class="text-right">
@@ -1321,7 +1321,7 @@
       if (confirm(`Remove ${p.name} from the table?`)) {
         window.tableState.players = window.tableState.players.filter(x => x.id !== playerId);
         if (window.tableState.rakeCollector === playerId) {
-          window.tableState.rakeCollector = 'KITTY';
+          window.tableState.rakeCollector = 'HOUSE';
         }
         if (claimedPlayerId === playerId) {
           claimedPlayerId = null;
@@ -1364,7 +1364,7 @@
       // Keep roster, reset active buyins & stacks
       window.tableState.players = window.tableState.players.map(p => ({
         ...p,
-        buyins: [window.tableState.defaultBuyin],
+        buyins: [window.tableState.defaultBuyin || 20],
         cashout: 0,
         hasCashedOut: false
       }));
@@ -1536,7 +1536,7 @@
       text += `💰 Total Buy-ins: ${window.tableState.currency}${totalBuyins.toFixed(2)}\n`;
       text += `🪙 Total Cashed Out: ${window.tableState.currency}${totalCashouts.toFixed(2)}\n`;
       if (window.tableState.rakeEnabled) {
-        text += `🏦 House Rake / Fee: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player)\n`;
+        text += `🏦 House Rake: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player)\n`;
       }
       text += `⚖️ Balance Status: ${Math.abs(diff) < 0.01 ? 'Balanced (Zero Discrepancy)' : `⚠ Off by ${window.tableState.currency}${diff.toFixed(2)}`}\n\n`;
 
@@ -1548,7 +1548,7 @@
         const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === p.id);
         const symbol = net >= 0 ? '+' : '';
         const collectorTag = isCollector ? ' [HOST]' : '';
-        const rakeTag = window.tableState.rakeEnabled ? ` (Fee: -${window.tableState.currency}${perPersonRake})` : '';
+        const rakeTag = window.tableState.rakeEnabled ? ` (Rake: -${window.tableState.currency}${perPersonRake})` : '';
         text += `• ${p.name}${collectorTag}: In ${window.tableState.currency}${buy} ➔ Out ${window.tableState.currency}${cash}${rakeTag} | Net: ${symbol}${window.tableState.currency}${net.toFixed(2)}\n`;
       });
 
@@ -1616,7 +1616,7 @@
       rakeToggle.addEventListener('change', (e) => {
         window.tableState.rakeEnabled = e.target.checked;
         broadcastCloudUpdate();
-        showToast(window.tableState.rakeEnabled ? "Rake / Table Fee enabled" : "Rake disabled", "🏦");
+        showToast(window.tableState.rakeEnabled ? "House Rake enabled" : "Rake disabled", "🏦");
       });
 
       // Rake Amount Per Person
@@ -1640,7 +1640,7 @@
         document.getElementById('modalPlayerId').value = '';
         document.getElementById('modalPlayerName').value = '';
         document.getElementById('modalBuyinGroup').classList.remove('hidden');
-        document.getElementById('modalInitialBuyin').value = window.tableState.defaultBuyin;
+        document.getElementById('modalInitialBuyin').value = window.tableState.defaultBuyin || 20;
         document.getElementById('savePlayerSubmitBtn').innerText = 'Add Player';
 
         selectedColor = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)].hex;
