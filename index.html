@@ -1284,8 +1284,16 @@
             <!-- Header: Avatar, Name & Edit -->
             <div class="flex items-center justify-between pb-3 border-b border-white/10">
               <div class="flex items-center space-x-3 overflow-hidden">
-                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/10" style="background-color: ${p.color};">
-                  ${escapeHtml(p.name.charAt(0).toUpperCase())}
+                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/10 overflow-hidden relative" style="background-color: ${p.color};">
+                  <img 
+                    src="${encodeURIComponent(p.name)}.JPEG" 
+                    alt="${escapeHtml(p.name)}" 
+                    class="w-full h-full object-cover object-center"
+                    onerror="if(!this.dataset.triedJpg){ this.dataset.triedJpg='1'; this.src='${encodeURIComponent(p.name)}.jpg'; } else { this.style.display='none'; const fb = this.nextElementSibling; if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); } }"
+                  />
+                  <div class="w-full h-full items-center justify-center text-white font-bold text-sm absolute inset-0 hidden" style="background-color: ${p.color};">
+                    ${escapeHtml(p.name.charAt(0).toUpperCase())}
+                  </div>
                 </div>
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
