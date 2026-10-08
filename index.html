@@ -42,12 +42,25 @@
   </script>
   <style>
     body {
-      background-color: #040906;
       color: #f3f4f6;
+      transition: background-color 0.6s ease, background-image 0.6s ease;
     }
-    .felt-pattern {
+    /* Default dark grey background */
+    .bg-table-neutral {
+      background-color: #121417;
+      background-image: radial-gradient(rgba(75, 85, 99, 0.35) 1px, transparent 0);
+      background-size: 22px 22px;
+    }
+    /* Original felt green background (balanced / discrepancy < 3€) */
+    .bg-table-green {
       background-color: #05100a;
       background-image: radial-gradient(rgba(35, 89, 61, 0.45) 1px, transparent 0);
+      background-size: 22px 22px;
+    }
+    /* High alert crimson red background (discrepancy > 5€) */
+    .bg-table-red {
+      background-color: #170507;
+      background-image: radial-gradient(rgba(185, 28, 28, 0.45) 1px, transparent 0);
       background-size: 22px 22px;
     }
     @keyframes pulse-live {
@@ -59,20 +72,24 @@
     }
   </style>
 </head>
-<body class="felt-pattern min-h-screen font-sans flex flex-col justify-between selection:bg-gold-500 selection:text-black">
+<body class="bg-table-neutral min-h-screen font-sans flex flex-col justify-between selection:bg-gold-500 selection:text-black">
 
   <header class="border-b border-felt-700/80 bg-black/85 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-lg">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <!-- Logo & App Title -->
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-600 via-gold-400 to-amber-200 p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 flex-shrink-0">
-          <div class="w-full h-full bg-felt-900 rounded-full flex items-center justify-center text-gold-400 text-lg font-serif">
-            ♠
-          </div>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-600 via-gold-400 to-amber-200 p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 flex-shrink-0 overflow-hidden">
+          <img 
+            id="tableLogoImg"
+            src="logo.jpg" 
+            alt="Table Logo" 
+            class="w-full h-full rounded-full object-cover object-center"
+            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-felt-900 rounded-full flex items-center justify-center text-gold-400 text-lg font-serif\'>♠</div>';"
+          />
         </div>
         <div>
           <h1 class="text-base sm:text-xl font-bold font-serif tracking-wider text-amber-100 flex items-center gap-2">
-            HIGH ROLLER <span id="headerRoleBadge" class="text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-emerald-300 px-2 py-0.5 rounded-full">INITIALIZING</span>
+            Poker OG's <span id="headerRoleBadge" class="text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-emerald-300 px-2 py-0.5 rounded-full">INITIALIZING</span>
           </h1>
           <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
             <span id="syncStatusIndicator" class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
@@ -101,6 +118,11 @@
         <button id="tabGameBtn" onclick="switchTab('game')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow">
           <span>♠️</span>
           <span>Table</span>
+        </button>
+        <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
+          <span>📜</span>
+          <span>History</span>
+          <span id="historyNavBadge" class="ml-0.5 bg-felt-700 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">0</span>
         </button>
         <button id="tabRecordsBtn" onclick="switchTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
           <span>🏆</span>
@@ -131,7 +153,7 @@
               <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake</h3>
               <span id="rakeStatusBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400">1€ / Person</span>
             </div>
-            <p class="text-xs text-gray-400">Deducts rake per player. Verification: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
+            <p class="text-xs text-gray-400">Deducted from starting chip stack upfront (e.g. €20 buy-in &rarr; €19 chips). Verification: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
           </div>
         </div>
 
@@ -227,20 +249,20 @@
       </div>
 
       <!-- Greedy Debt Settlement & Export Section -->
-      <section class="bg-felt-900/95 border border-felt-700 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-felt-700/80">
+      <section class="bg-[#181a1f] border border-zinc-700/80 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-zinc-700/80">
           <div>
             <h2 class="text-xl font-bold font-serif text-amber-200 flex items-center gap-2">
               <span>🎲 Who Pays Whom</span>
-              <span class="text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full">
+              <span id="settlementModeBadge" class="text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full">
                 Optimal Settlement
               </span>
             </h2>
-            <p class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transfers so losers pay winners directly.</p>
+            <p id="settlementModeDesc" class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transfers so losers pay winners directly.</p>
           </div>
 
           <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button id="copySummaryBtn" class="w-full sm:w-auto px-4 py-2 bg-felt-700 hover:bg-felt-600 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 border border-felt-500 transition shadow">
+            <button id="copySummaryBtn" class="w-full sm:w-auto px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 border border-zinc-600 transition shadow">
               <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
               <span id="copySummaryText">Copy for Chat</span>
             </button>
@@ -253,6 +275,65 @@
         </div>
       </section>
 
+    </div>
+
+    <!-- VIEW: REAL-TIME BUY-IN & REBUY HISTORY TAB -->
+    <div id="viewHistory" class="hidden space-y-6">
+      <div class="bg-[#181a1f] border border-zinc-700/80 rounded-2xl p-5 sm:p-7 shadow-2xl relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-zinc-700/80 gap-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
+              📜
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">BUY-IN &amp; REBUY LOG</h2>
+                <span id="historyLogCountBadge" class="text-xs bg-gold-500/20 text-gold-300 border border-gold-500/40 px-2 py-0.5 rounded-full font-bold">0 events</span>
+              </div>
+              <p class="text-xs text-gray-400">Live chronological timeline of all buy-ins and rebuys with exact timestamps</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="window.copyHistoryLog()" class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold border border-zinc-600 transition flex items-center gap-1.5 shadow">
+              <svg class="w-3.5 h-3.5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              <span>Copy Log</span>
+            </button>
+            <button onclick="window.clearHistoryLog()" class="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-lg text-xs font-semibold border border-red-800/80 transition flex items-center gap-1">
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- History Overview Statistics -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+            <span class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block mb-0.5">Total Rebuys</span>
+            <div id="statHistRebuysCount" class="text-xl font-bold font-mono text-amber-200">0</div>
+            <span class="text-[10px] text-gray-500">Excluding initial seats</span>
+          </div>
+          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+            <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold block mb-0.5">Rebuy Volume</span>
+            <div id="statHistRebuysVolume" class="text-xl font-bold font-mono text-emerald-400">€0.00</div>
+            <span class="text-[10px] text-gray-500">Added mid-game</span>
+          </div>
+          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+            <span class="text-[11px] uppercase tracking-wider text-gold-400 font-semibold block mb-0.5">Most Rebuys</span>
+            <div id="statHistTopRebuyer" class="text-xl font-bold text-gold-300 truncate">-</div>
+            <span id="statHistTopRebuyerSub" class="text-[10px] text-gray-500">0 rebuys</span>
+          </div>
+          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+            <span class="text-[11px] uppercase tracking-wider text-blue-400 font-semibold block mb-0.5">Latest Action</span>
+            <div id="statHistLatestTime" class="text-xl font-bold font-mono text-blue-300 truncate">-</div>
+            <span id="statHistLatestDesc" class="text-[10px] text-gray-500">No events logged</span>
+          </div>
+        </div>
+
+        <!-- Chronological Timeline List -->
+        <div class="space-y-2.5" id="historyTimelineList">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
     </div>
 
     <!-- VIEW 2: DEDICATED ANONYMOUS ALL-TIME RECORDS TAB (No player names, No Biggest Win) -->
@@ -456,6 +537,49 @@
     </div>
   </div>
 
+  <!-- Modal: Quick Chip Counter -->
+  <div id="chipModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeModal('chipModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      
+      <div class="flex items-center space-x-3 mb-1">
+        <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-lg">
+          🧮
+        </div>
+        <div>
+          <h3 class="text-lg font-bold font-serif text-amber-200">Chip Counter</h3>
+          <p class="text-xs text-gray-400">Counting stack for <span id="chipModalPlayerName" class="text-gold-300 font-bold">Player</span></p>
+        </div>
+      </div>
+
+      <!-- Denomination rows container -->
+      <div id="chipRowsContainer" class="mt-4 space-y-2.5 max-h-[58vh] overflow-y-auto pr-1">
+        <!-- Rows dynamically generated -->
+      </div>
+
+      <!-- Total Chip Value & Actions -->
+      <div class="mt-4 pt-3.5 border-t border-felt-700 flex flex-col gap-3">
+        <div class="flex items-center justify-between bg-felt-950 p-3 rounded-xl border border-felt-700">
+          <span class="text-xs text-gray-300 font-semibold uppercase tracking-wider">Total Counted:</span>
+          <span id="chipModalTotalDisplay" class="font-mono font-bold text-emerald-400 text-xl tracking-tight">€0.00</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.resetChipCounts()" class="px-3 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
+            Reset
+          </button>
+          <button type="button" onclick="closeModal('chipModal')" class="w-1/3 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
+            Cancel
+          </button>
+          <button type="button" onclick="window.applyChipCountsToCashout()" class="flex-1 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white font-bold rounded-lg text-xs shadow-lg transition flex items-center justify-center gap-1">
+            <span>Apply to Stack</span>
+            <span>✓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification element -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-felt-800 border border-gold-400/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 pointer-events-none">
     <span id="toastIcon">✨</span>
@@ -471,6 +595,17 @@
       { name: 'Purple', bg: 'bg-purple-600', hex: '#9333ea' },
       { name: 'Slate', bg: 'bg-gray-600', hex: '#4b5563' }
     ];
+
+    const CHIP_DENOMINATIONS = [
+      { id: 'brown', name: 'Brown', val: 0.10, chipBg: 'bg-amber-900 border-amber-700 text-amber-200' },
+      { id: 'blue', name: 'Blue', val: 1.00, chipBg: 'bg-blue-600 border-blue-400 text-white' },
+      { id: 'green', name: 'Green', val: 2.00, chipBg: 'bg-emerald-600 border-emerald-400 text-white' },
+      { id: 'yellow', name: 'Yellow', val: 10.00, chipBg: 'bg-yellow-500 border-yellow-300 text-black' },
+      { id: 'black', name: 'Black', val: 100.00, chipBg: 'bg-zinc-900 border-zinc-500 text-white ring-1 ring-white/30' }
+    ];
+
+    let currentCountingPlayerId = null;
+    let activeChipCounts = { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 };
 
     // Read room code from URL query ?room=XYZ or default to TABLE1
     const urlParams = new URLSearchParams(window.location.search);
@@ -495,10 +630,13 @@
       rakePerPerson: 1,
       rakeCollector: 'HOUSE',
       players: [
-        { id: '1', name: 'Alex', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '2', name: 'Sarah', color: COLOR_PRESETS[1].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '3', name: 'Dave', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false }
+        { id: '1', name: 'Maarten', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '2', name: 'Lucas', color: COLOR_PRESETS[1].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '3', name: 'Matthieu', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '4', name: 'Nick', color: COLOR_PRESETS[3].hex, buyins: [20], cashout: 0, hasCashedOut: false },
+        { id: '5', name: 'JJ', color: COLOR_PRESETS[4].hex, buyins: [20], cashout: 0, hasCashedOut: false }
       ],
+      buyinHistory: [],
       // Anonymous historical records (No player names, No Biggest Win)
       allTimeRecords: {
         biggestBuyin: { amount: 60, date: 'Oct 2026' },
@@ -522,6 +660,9 @@
           const parsed = JSON.parse(local);
           if (parsed && typeof parsed === 'object') {
             window.tableState = { ...window.tableState, ...parsed };
+            if (!Array.isArray(window.tableState.buyinHistory)) {
+              window.tableState.buyinHistory = [];
+            }
           }
         }
       } catch (e) {}
@@ -737,11 +878,34 @@
       const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
       const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
 
-      let net = cash - totalBuy - perPersonRake;
+      // Rake is deducted upfront from starting chips. Cash-out chips redeem 1:1 against total buy-in cash.
+      let net = cash - totalBuy;
       if (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id) {
         net += totalRakePool;
       }
       return Math.round(net * 100) / 100;
+    }
+
+    function updateTableBackground(allCashedOut, discrepancy) {
+      const body = document.body;
+      body.classList.remove('bg-table-neutral', 'bg-table-green', 'bg-table-red');
+
+      // Only evaluate green/red after all players have entered their end chip stack
+      if (allCashedOut) {
+        if (discrepancy < 3) {
+          // Less than 3€ discrepancy -> Turn the green it was before
+          body.classList.add('bg-table-green');
+        } else if (discrepancy > 5) {
+          // More than 5€ discrepancy -> Turn red
+          body.classList.add('bg-table-red');
+        } else {
+          // In-between (3€ to 5€) -> Maintain dark grey
+          body.classList.add('bg-table-neutral');
+        }
+      } else {
+        // Active game / pending end chip stacks -> Default dark grey
+        body.classList.add('bg-table-neutral');
+      }
     }
 
     function syncAllTimeRecordsFromCurrent() {
@@ -777,19 +941,45 @@
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
       const totalRakePool = window.tableState.players.length * perPersonRake;
 
+      // Centralized House Bank mode: Everyone pays the House Account, and the House Account pays the winners
+      if (window.tableState.rakeCollector === 'HOUSE') {
+        const transactions = [];
+
+        // Players with net losses pay the House Account
+        window.tableState.players.forEach(p => {
+          const net = getPlayerNet(p);
+          if (net < -0.009) {
+            transactions.push({
+              from: p.name,
+              to: '🏦 House Account',
+              amount: Math.round(Math.abs(net) * 100) / 100,
+              type: 'INTO_HOUSE'
+            });
+          }
+        });
+
+        // House Account pays out players with net winnings
+        window.tableState.players.forEach(p => {
+          const net = getPlayerNet(p);
+          if (net > 0.009) {
+            transactions.push({
+              from: '🏦 House Account',
+              to: p.name,
+              amount: Math.round(net * 100) / 100,
+              type: 'OUT_OF_HOUSE'
+            });
+          }
+        });
+
+        return transactions;
+      }
+
+      // Peer-to-peer greedy settlement when an individual player/host is the collector
       const balances = window.tableState.players.map(p => ({
         id: p.id,
         name: p.name,
         net: getPlayerNet(p)
       }));
-
-      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === 'HOUSE' && totalRakePool > 0) {
-        balances.push({
-          id: 'HOUSE_ACCOUNT',
-          name: '🏦 House Rake Account',
-          net: Math.round(totalRakePool * 100) / 100
-        });
-      }
 
       let debtors = balances.filter(b => b.net < -0.009).map(b => ({ ...b, amount: Math.abs(b.net) }));
       let creditors = balances.filter(b => b.net > 0.009).map(b => ({ ...b, amount: b.net }));
@@ -812,7 +1002,8 @@
           transactions.push({
             from: debtor.name,
             to: creditor.name,
-            amount: roundedAmount
+            amount: roundedAmount,
+            type: 'P2P'
           });
         }
 
@@ -834,6 +1025,9 @@
       const diff = Math.round((totalAccounted - totalBuyins) * 100) / 100;
       const allCashedOut = window.tableState.players.length > 0 && completedCashoutsCount === window.tableState.players.length;
 
+      // Evaluate and transition page background color
+      updateTableBackground(allCashedOut, Math.abs(diff));
+
       if (window.tableState.players.length === 0) {
         banner.className = "p-4 rounded-xl border border-felt-700 bg-felt-900/60 text-gray-400 flex flex-col md:flex-row items-center justify-between";
         banner.innerHTML = `
@@ -848,7 +1042,7 @@
         return;
       }
 
-      const rakeText = window.tableState.rakeEnabled ? ` + Rake (${window.tableState.currency}${totalRake.toFixed(2)})` : '';
+      const expectedChipsInPlay = Math.max(0, Math.round((totalBuyins - totalRake) * 100) / 100);
 
       if (Math.abs(diff) < 0.01) {
         banner.className = "p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-r from-felt-900 via-emerald-950/40 to-felt-900 text-white shadow-lg shadow-emerald-950/40 flex flex-col sm:flex-row items-center justify-between gap-4";
@@ -863,7 +1057,7 @@
                 <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-500/30">Verified</span>
               </div>
               <p class="text-xs text-gray-300 mt-0.5">
-                Total Buy-ins (<strong class="text-white">${window.tableState.currency}${totalBuyins.toFixed(2)}</strong>) = Total Cash-outs (<strong class="text-white">${window.tableState.currency}${totalCashouts.toFixed(2)}</strong>)${rakeText}.
+                Total Buy-ins (<strong class="text-white">${window.tableState.currency}${totalBuyins.toFixed(2)}</strong>) &minus; Upfront Rake (<strong class="text-white">${window.tableState.currency}${totalRake.toFixed(2)}</strong>) = Table Chips in Play (<strong class="text-white">${window.tableState.currency}${totalCashouts.toFixed(2)}</strong>).
               </p>
             </div>
           </div>
@@ -885,7 +1079,7 @@
                 <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/30">${allCashedOut ? 'Discrepancy' : 'Live Game'}</span>
               </div>
               <p class="text-xs text-gray-300 mt-0.5">
-                Buy-ins exceed Cash-outs${rakeText}. ${allCashedOut ? 'Count chip stacks again or check table felt.' : 'Players still need to enter their cashout chip stack.'}
+                Expected ${window.tableState.currency}${expectedChipsInPlay.toFixed(2)} in chips across the table after upfront rake. ${allCashedOut ? 'Check table felt or recount stacks.' : 'Players still need to enter their cashout chip stack.'}
               </p>
             </div>
           </div>
@@ -1039,7 +1233,7 @@
 
       if (window.tableState.players.length === 0) {
         container.innerHTML = `
-          <div class="col-span-full py-12 text-center text-gray-400 bg-felt-900/40 rounded-2xl border border-dashed border-felt-700">
+          <div class="col-span-full py-12 text-center text-gray-400 bg-zinc-900/40 rounded-2xl border border-dashed border-zinc-700">
             <span class="text-4xl block mb-2">♠</span>
             <p class="text-base font-semibold text-gray-300">No players seated at this table</p>
             <p class="text-xs text-gray-500 mt-1">Tap "Add Player" or invite friends with Room Code <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
@@ -1057,25 +1251,38 @@
         const rebuysCount = p.buyins.length > 1 ? p.buyins.length - 1 : 0;
         const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === p.id);
         const isMySeat = (claimedPlayerId === p.id);
+        const chipsReceived = Math.max(0, totalBuy - (window.tableState.rakeEnabled ? perPersonRake : 0));
 
         let profitBadge = '';
+        let cardColorClasses = '';
+
         if (!p.hasCashedOut) {
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-semibold rounded bg-felt-800 text-gray-400 border border-felt-600">Active Game</span>`;
+          // Default neutral grey box during active game
+          cardColorClasses = 'bg-[#181a1f] border-zinc-700/80 hover:border-zinc-500 shadow-xl';
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-semibold rounded bg-zinc-800 text-gray-400 border border-zinc-600">Active Game</span>`;
         } else if (roundedNet > 0.009) {
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/90 text-emerald-400 border border-emerald-700/60 shadow">+${window.tableState.currency}${roundedNet.toFixed(2)}</span>`;
+          // In Profit: card turns distinct felt emerald green
+          cardColorClasses = 'bg-[#062413] border-emerald-500/80 shadow-xl shadow-emerald-950/60 ring-1 ring-emerald-500/40';
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/90 text-emerald-300 border border-emerald-600 shadow">+${window.tableState.currency}${roundedNet.toFixed(2)}</span>`;
         } else if (roundedNet < -0.009) {
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-rose-950/90 text-rose-400 border border-rose-700/60 shadow">-${window.tableState.currency}${Math.abs(roundedNet).toFixed(2)}</span>`;
+          // In Loss: ultra-transparent red tint with delicate border
+          cardColorClasses = 'bg-red-500/[0.06] border-red-500/30 shadow-xl shadow-red-950/10 ring-1 ring-red-500/20';
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-red-950/40 text-rose-300 border border-red-500/40 shadow-sm">-${window.tableState.currency}${Math.abs(roundedNet).toFixed(2)}</span>`;
         } else {
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-gray-800 text-gray-300 border border-gray-600">Even</span>`;
+          // Even (0.00): neutral slate/grey with even badge
+          cardColorClasses = 'bg-[#181a1f] border-zinc-500 shadow-xl';
+          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-zinc-800 text-gray-300 border border-zinc-600">Even</span>`;
         }
 
+        const seatRing = isMySeat ? 'ring-2 ring-gold-400 border-gold-400' : '';
+
         const card = document.createElement('div');
-        card.className = `bg-felt-900/90 border ${isMySeat ? 'border-gold-400 ring-2 ring-gold-400/40' : 'border-felt-700 hover:border-felt-500'} rounded-xl p-4 sm:p-5 shadow-xl transition-all flex flex-col justify-between relative group`;
+        card.className = `${cardColorClasses} ${seatRing} rounded-xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between relative group`;
         
         card.innerHTML = `
           <div>
             <!-- Header: Avatar, Name & Edit -->
-            <div class="flex items-center justify-between pb-3 border-b border-felt-800">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
               <div class="flex items-center space-x-3 overflow-hidden">
                 <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/10" style="background-color: ${p.color};">
                   ${escapeHtml(p.name.charAt(0).toUpperCase())}
@@ -1102,7 +1309,7 @@
 
               <!-- Top Card Actions -->
               <div class="flex items-center space-x-1 flex-shrink-0">
-                <button onclick="window.claimSeat('${p.id}')" title="${isMySeat ? 'Unclaim seat' : 'Claim this is my seat on this phone'}" class="text-xs px-2 py-1 rounded border transition ${isMySeat ? 'bg-gold-500 text-black font-bold border-gold-400' : 'bg-felt-800 text-gray-300 hover:text-white border-felt-600'}">
+                <button onclick="window.claimSeat('${p.id}')" title="${isMySeat ? 'Unclaim seat' : 'Claim this is my seat on this phone'}" class="text-xs px-2 py-1 rounded border transition ${isMySeat ? 'bg-gold-500 text-black font-bold border-gold-400' : 'bg-black/40 text-gray-300 hover:text-white border-white/20'}">
                   ${isMySeat ? 'My Seat ✓' : 'Claim'}
                 </button>
                 <button onclick="window.openEditPlayerModal('${p.id}')" title="Edit player" class="text-gray-400 hover:text-gold-400 p-1 rounded transition">
@@ -1122,12 +1329,16 @@
               </div>
 
               ${window.tableState.rakeEnabled ? `
-                <div class="flex justify-between items-center text-xs text-gold-400/90 bg-gold-950/30 px-2 py-1 rounded border border-gold-500/20">
-                  <span>House Rake Paid:</span>
+                <div class="flex justify-between items-center text-xs text-gold-400/90 bg-gold-950/40 px-2 py-1 rounded border border-gold-500/20">
+                  <span>Upfront Rake from Starting Chips:</span>
                   <span class="font-mono font-semibold">-${window.tableState.currency}${perPersonRake.toFixed(2)}</span>
                 </div>
+                <div class="flex justify-between items-center text-xs text-emerald-300/90 bg-black/30 px-2 py-1 rounded border border-white/10">
+                  <span>Chips Given to Table:</span>
+                  <span class="font-mono font-bold">${window.tableState.currency}${chipsReceived.toFixed(2)}</span>
+                </div>
                 ${isCollector ? `
-                  <div class="flex justify-between items-center text-xs text-emerald-400 bg-emerald-950/30 px-2 py-1 rounded border border-emerald-500/20">
+                  <div class="flex justify-between items-center text-xs text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/30">
                     <span>House Rake Collected:</span>
                     <span class="font-mono font-semibold">+${window.tableState.currency}${totalRakePool.toFixed(2)}</span>
                   </div>
@@ -1135,16 +1346,16 @@
               ` : ''}
 
               <!-- Rebuy quick-add buttons -->
-              <div class="bg-felt-950/60 p-2 rounded-lg border border-felt-800 flex items-center justify-between gap-1">
+              <div class="bg-black/40 p-2 rounded-lg border border-white/10 flex items-center justify-between gap-1">
                 <span class="text-[11px] text-gray-400 font-medium">Rebuy:</span>
                 <div class="flex items-center gap-1">
                   <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2.5 py-0.5 bg-gold-600 hover:bg-gold-500 text-black rounded text-[11px] font-bold border border-gold-400 transition shadow" title="Default €20 Rebuy">
                     +${window.tableState.currency}20
                   </button>
-                  <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-felt-800 hover:bg-felt-700 text-white rounded text-[11px] font-semibold border border-felt-600 transition">
+                  <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-black/40 hover:bg-white/10 text-white rounded text-[11px] font-semibold border border-white/20 transition">
                     +${window.tableState.currency}10
                   </button>
-                  <button onclick="window.promptCustomBuyin('${p.id}')" class="px-2 py-0.5 bg-amber-950/60 hover:bg-amber-900 text-amber-300 rounded text-[11px] font-semibold border border-amber-800/80 transition" title="Custom Buyin">
+                  <button onclick="window.promptCustomBuyin('${p.id}')" class="px-2 py-0.5 bg-amber-950/70 hover:bg-amber-900 text-amber-300 rounded text-[11px] font-semibold border border-amber-700/80 transition" title="Custom Buyin">
                     +Custom
                   </button>
                 </div>
@@ -1152,13 +1363,24 @@
             </div>
 
             <!-- End Cash-out Stack Input -->
-            <div class="mt-4 pt-3 border-t border-felt-800">
-              <div class="flex justify-between items-center mb-1">
+            <div class="mt-4 pt-3 border-t border-white/10">
+              <div class="flex justify-between items-center mb-1.5">
                 <label class="text-xs font-semibold text-gray-300 flex items-center gap-1">
                   <span>End Chip Stack</span>
-                  <span class="text-[10px] text-gray-500 font-normal">(Cash Out)</span>
+                  <span class="text-[10px] text-gray-400 font-normal">(Cash Out)</span>
                 </label>
-                <div>${profitBadge}</div>
+                <div class="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    onclick="window.openChipModal('${p.id}')"
+                    class="px-2 py-0.5 bg-felt-800 hover:bg-gold-500 hover:text-black text-gold-300 border border-gold-500/40 rounded text-[11px] font-semibold transition flex items-center gap-1 shadow-sm"
+                    title="Calculate stack by counting physical chips"
+                  >
+                    <span>🧮</span>
+                    <span>Count Chips</span>
+                  </button>
+                  <div>${profitBadge}</div>
+                </div>
               </div>
 
               <div class="relative rounded-lg shadow-inner">
@@ -1172,14 +1394,14 @@
                   placeholder="Enter final chips"
                   value="${p.hasCashedOut ? p.cashout : ''}"
                   onchange="window.updateCashout('${p.id}', this.value)"
-                  class="w-full bg-felt-800/80 border ${p.hasCashedOut ? (roundedNet >= 0 ? 'border-emerald-600/70 focus:ring-emerald-400' : 'border-rose-600/70 focus:ring-rose-400') : 'border-felt-600 focus:ring-gold-400'} rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:ring-2"
+                  class="w-full bg-black/40 border ${p.hasCashedOut ? (roundedNet > 0.009 ? 'border-emerald-500 focus:ring-emerald-400' : (roundedNet < -0.009 ? 'border-rose-500 focus:ring-rose-400' : 'border-zinc-500')) : 'border-zinc-600 focus:ring-gold-400'} rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:ring-2"
                 >
               </div>
             </div>
           </div>
 
           <!-- History / Undo Rebuy -->
-          <div class="mt-3 pt-2 text-[11px] text-gray-400 flex items-center justify-between border-t border-felt-800/60">
+          <div class="mt-3 pt-2 text-[11px] text-gray-400 flex items-center justify-between border-t border-white/10">
             <span class="truncate max-w-[190px]">Buyins: [${p.buyins.map(b => `${window.tableState.currency}${b}`).join(', ')}]</span>
             ${p.buyins.length > 1 ? `
               <button onclick="window.undoLastBuyin('${p.id}')" class="text-red-400 hover:text-red-300 font-medium ml-1 transition" title="Undo last rebuy">
@@ -1199,11 +1421,32 @@
       const { totalBuyins, totalCashouts, totalRake } = calculateTotals();
       const diff = Math.round((totalCashouts + totalRake - totalBuyins) * 100) / 100;
 
+      const modeBadge = document.getElementById('settlementModeBadge');
+      const modeDesc = document.getElementById('settlementModeDesc');
+
+      if (window.tableState.rakeCollector === 'HOUSE') {
+        if (modeBadge) {
+          modeBadge.innerText = 'Central House Bank';
+          modeBadge.className = 'text-xs font-sans font-semibold text-gold-300 bg-gold-950/80 border border-gold-600/80 px-2 py-0.5 rounded-full';
+        }
+        if (modeDesc) {
+          modeDesc.innerText = 'All players pay their losses into the House Account, and the House Account pays out all winners.';
+        }
+      } else {
+        if (modeBadge) {
+          modeBadge.innerText = 'Peer-to-Peer Settlement';
+          modeBadge.className = 'text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full';
+        }
+        if (modeDesc) {
+          modeDesc.innerText = 'Greedy algorithm minimizes transfers so losers pay winners directly.';
+        }
+      }
+
       list.innerHTML = '';
 
       if (window.tableState.players.length < 2) {
         list.innerHTML = `
-          <div class="p-6 text-center text-gray-400 bg-felt-950/40 rounded-xl border border-felt-800">
+          <div class="p-6 text-center text-gray-400 bg-zinc-900/60 rounded-xl border border-zinc-800">
             <p class="text-sm">Need at least 2 players to calculate payments.</p>
           </div>
         `;
@@ -1212,7 +1455,7 @@
 
       if (transactions.length === 0) {
         list.innerHTML = `
-          <div class="p-6 text-center text-gray-400 bg-felt-950/40 rounded-xl border border-felt-800">
+          <div class="p-6 text-center text-gray-400 bg-zinc-900/60 rounded-xl border border-zinc-800">
             <p class="text-sm text-gray-300 font-medium">All accounts settled or everyone is break-even!</p>
             <p class="text-xs text-gray-500 mt-1">Enter player chip cash-outs above to calculate who pays whom.</p>
           </div>
@@ -1230,30 +1473,90 @@
         list.appendChild(warning);
       }
 
-      transactions.forEach((tx) => {
-        const isHouseTarget = tx.to.includes('House Rake');
+        transactions.forEach((tx) => {
+        const isHouseTarget = tx.to.includes('House Account');
+        const isHouseSource = tx.from.includes('House Account');
         const item = document.createElement('div');
-        item.className = `border rounded-xl p-3 sm:p-4 flex items-center justify-between shadow hover:border-gold-500/40 transition ${isHouseTarget ? 'bg-amber-950/20 border-gold-500/40' : 'bg-felt-800/90 border-felt-700/90'}`;
+        let cardBg = '';
+        let icon = '💸';
+        let desc = 'Direct player payout';
+
+        if (isHouseSource) {
+          // House paying winners: clean emerald opacity
+          cardBg = 'bg-emerald-500/15 border-emerald-500/60 shadow-lg hover:border-emerald-400';
+          icon = '📤';
+          desc = 'Net winnings paid out by House Account';
+        } else if (isHouseTarget) {
+          // Players paying House: very transparent subtle red
+          cardBg = 'bg-red-500/[0.06] border-red-500/30 shadow-lg hover:border-red-400/50';
+          icon = '📥';
+          desc = 'Net loss paid into House Account';
+        } else {
+          // Peer-to-peer: clean dark card with subtle opacity
+          cardBg = 'bg-zinc-800/80 border-zinc-600 hover:border-gold-400/80 shadow-lg';
+        }
+
+        item.className = `border rounded-xl p-3.5 sm:p-4 flex items-center justify-between shadow-md transition-all duration-200 ${cardBg}`;
+
         item.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-full ${isHouseTarget ? 'bg-amber-900/60 border border-gold-500/50 text-gold-300' : 'bg-rose-900/60 border border-rose-500/40 text-rose-300'} flex items-center justify-center text-xs font-bold">
-              ${isHouseTarget ? '🏦' : '💸'}
+          <div class="flex items-center space-x-3.5">
+            <div class="w-9 h-9 rounded-full ${isHouseSource ? 'bg-emerald-800/80 border border-emerald-400 text-emerald-200 shadow-emerald-900/50 shadow' : (isHouseTarget ? 'bg-red-950/40 border border-red-500/40 text-red-300 shadow-red-950/40 shadow' : 'bg-rose-800/80 border border-rose-400 text-rose-200 shadow')} flex items-center justify-center text-sm font-bold flex-shrink-0">
+              ${icon}
             </div>
             <div>
-              <div class="text-sm font-semibold text-white">
-                <span class="text-rose-400 font-bold">${escapeHtml(tx.from)}</span>
-                <span class="text-gray-400 text-xs mx-1">pays</span>
-                <span class="${isHouseTarget ? 'text-gold-300' : 'text-emerald-400'} font-bold">${escapeHtml(tx.to)}</span>
+              <div class="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
+                <span class="${isHouseSource ? 'text-amber-300' : 'text-red-300'} font-bold">${escapeHtml(tx.from)}</span>
+                <span class="text-gray-300 text-xs font-normal">pays</span>
+                <span class="${isHouseTarget ? 'text-amber-300' : 'text-emerald-300'} font-bold">${escapeHtml(tx.to)}</span>
               </div>
-              <p class="text-[11px] text-gray-400">${isHouseTarget ? 'House Rake contribution' : 'Direct player payout'}</p>
+              <p class="text-[11px] text-gray-300 mt-0.5">${desc}</p>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-base sm:text-lg font-bold font-mono text-gold-400">${window.tableState.currency}${tx.amount.toFixed(2)}</span>
+          <div class="text-right flex-shrink-0 ml-3">
+            <div class="px-2.5 py-1 rounded-lg bg-black/60 border ${isHouseSource ? 'border-emerald-500/40 text-emerald-300' : (isHouseTarget ? 'border-red-500/30 text-red-300' : 'border-gold-400/40 text-gold-300')}">
+              <span class="text-base sm:text-lg font-bold font-mono">${window.tableState.currency}${tx.amount.toFixed(2)}</span>
+            </div>
           </div>
         `;
         list.appendChild(item);
       });
+
+      // When House Account is the central bank, show the retained house profit summary
+      // If there is an unbalanced surplus, adjust the retained rake and turn the entry RED
+      if (window.tableState.rakeCollector === 'HOUSE' && (window.tableState.rakeEnabled || diff > 0.009) && (totalRake > 0 || diff > 0.009)) {
+        const hasSurplus = diff > 0.009;
+        const adjustedRetained = Math.round((totalRake - (hasSurplus ? diff : 0)) * 100) / 100;
+        const rakeSummaryBox = document.createElement('div');
+
+        if (hasSurplus) {
+          rakeSummaryBox.className = "mt-3 p-3.5 rounded-xl bg-rose-950/60 border-2 border-rose-500/80 shadow-lg shadow-rose-950/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs transition";
+          rakeSummaryBox.innerHTML = `
+            <div class="space-y-0.5">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🚨</span>
+                <span class="text-rose-300 font-bold uppercase tracking-wide">House Account Retained (Reduced by Surplus):</span>
+                <span class="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-500/40 uppercase">Unbalanced Table</span>
+              </div>
+              <p class="text-[11px] text-rose-200/90">
+                Surplus chips (+${window.tableState.currency}${diff.toFixed(2)}) exceed buy-ins, directly reducing the expected ${window.tableState.currency}${totalRake.toFixed(2)} house cut.
+              </p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <span class="font-mono font-bold text-rose-400 text-base sm:text-lg">${adjustedRetained < 0 ? '-' : ''}${window.tableState.currency}${Math.abs(adjustedRetained).toFixed(2)}</span>
+            </div>
+          `;
+        } else {
+          rakeSummaryBox.className = "mt-3 p-3 rounded-xl bg-zinc-900/90 border border-zinc-700 flex items-center justify-between text-xs";
+          rakeSummaryBox.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <span class="text-lg">🏦</span>
+              <span class="text-amber-200 font-semibold">House Account Retained (House Rake):</span>
+            </div>
+            <span class="font-mono font-bold text-gold-400 text-sm">${window.tableState.currency}${totalRake.toFixed(2)}</span>
+          `;
+        }
+        list.appendChild(rakeSummaryBox);
+      }
     }
 
     function renderRecordsTab() {
@@ -1275,6 +1578,127 @@
       document.getElementById('hofInputLossDate').value = rec.biggestLoss.date || '';
     }
 
+    function logBuyinEvent(playerName, amount, type = 'REBUY', totalAfter = 0) {
+      if (!Array.isArray(window.tableState.buyinHistory)) {
+        window.tableState.buyinHistory = [];
+      }
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const entry = {
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+        time: timeStr,
+        timestamp: Date.now(),
+        player: playerName,
+        amount: parseFloat(amount) || 0,
+        type: type, // 'INITIAL' or 'REBUY' or 'CUSTOM'
+        totalAfter: parseFloat(totalAfter) || 0
+      };
+
+      window.tableState.buyinHistory.unshift(entry);
+    }
+
+    function renderHistory() {
+      const historyList = document.getElementById('historyTimelineList');
+      const badge = document.getElementById('historyNavBadge');
+      const countBadge = document.getElementById('historyLogCountBadge');
+      const hist = window.tableState.buyinHistory || [];
+
+      if (badge) badge.innerText = hist.length;
+      if (countBadge) countBadge.innerText = `${hist.length} event${hist.length === 1 ? '' : 's'}`;
+
+      // Calculate statistics
+      let rebuysOnly = hist.filter(h => h.type !== 'INITIAL');
+      let rebuyVolume = rebuysOnly.reduce((acc, h) => acc + (parseFloat(h.amount) || 0), 0);
+
+      const rebuyCountsByPlayer = {};
+      rebuysOnly.forEach(h => {
+        rebuyCountsByPlayer[h.player] = (rebuyCountsByPlayer[h.player] || 0) + 1;
+      });
+
+      let topRebuyer = '-';
+      let topRebuyerCount = 0;
+      for (const [name, count] of Object.entries(rebuyCountsByPlayer)) {
+        if (count > topRebuyerCount) {
+          topRebuyerCount = count;
+          topRebuyer = name;
+        }
+      }
+
+      const statRebuys = document.getElementById('statHistRebuysCount');
+      const statVol = document.getElementById('statHistRebuysVolume');
+      const statTop = document.getElementById('statHistTopRebuyer');
+      const statTopSub = document.getElementById('statHistTopRebuyerSub');
+      const statLatest = document.getElementById('statHistLatestTime');
+      const statLatestDesc = document.getElementById('statHistLatestDesc');
+
+      if (statRebuys) statRebuys.innerText = rebuysOnly.length;
+      if (statVol) statVol.innerText = `${window.tableState.currency}${rebuyVolume.toFixed(2)}`;
+      if (statTop) statTop.innerText = topRebuyer;
+      if (statTopSub) statTopSub.innerText = topRebuyerCount > 0 ? `${topRebuyerCount} rebuy${topRebuyerCount === 1 ? '' : 's'}` : 'No rebuys yet';
+
+      if (hist.length > 0) {
+        if (statLatest) statLatest.innerText = hist[0].time;
+        if (statLatestDesc) statLatestDesc.innerText = `${hist[0].player} (+${window.tableState.currency}${hist[0].amount})`;
+      } else {
+        if (statLatest) statLatest.innerText = '-';
+        if (statLatestDesc) statLatestDesc.innerText = 'No events logged';
+      }
+
+      if (!historyList) return;
+      historyList.innerHTML = '';
+
+      if (hist.length === 0) {
+        historyList.innerHTML = `
+          <div class="py-12 text-center text-gray-400 bg-zinc-900/40 rounded-xl border border-dashed border-zinc-800">
+            <span class="text-3xl block mb-2">📜</span>
+            <p class="text-sm font-semibold text-gray-300">No Buy-ins Logged Yet</p>
+            <p class="text-xs text-gray-500 mt-1">When Maarten, Lucas, or other players rebuy at the table, their rebuys and exact time will appear here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      hist.forEach((entry, idx) => {
+        const isInitial = entry.type === 'INITIAL';
+        const card = document.createElement('div');
+        card.className = `p-3.5 sm:p-4 rounded-xl border transition flex items-center justify-between shadow ${
+          isInitial ? 'bg-zinc-900/60 border-zinc-800' : 'bg-amber-950/20 border-amber-600/30 hover:border-amber-500/50'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center space-x-3.5 min-w-0">
+            <div class="w-9 h-9 rounded-full ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : 'bg-gold-500/20 text-gold-300 border border-gold-500/40'} flex items-center justify-center font-bold text-sm flex-shrink-0">
+              ${isInitial ? '🏁' : '🪙'}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-sm text-white">${escapeHtml(entry.player)}</span>
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30'}">
+                  ${isInitial ? 'Seated' : 'Rebuy'}
+                </span>
+                <span class="font-mono text-xs text-gray-400 flex items-center gap-1">
+                  <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  ${entry.time}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">
+                Total table buy-in after this: <span class="font-mono text-gray-200 font-semibold">${window.tableState.currency}${entry.totalAfter ? entry.totalAfter.toFixed(2) : entry.amount.toFixed(2)}</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="text-right flex-shrink-0 ml-3">
+            <span class="text-base sm:text-lg font-bold font-mono ${isInitial ? 'text-gray-300' : 'text-emerald-400'}">
+              +${window.tableState.currency}${entry.amount.toFixed(2)}
+            </span>
+          </div>
+        `;
+
+        historyList.appendChild(card);
+      });
+    }
+
     function renderAll() {
       document.getElementById('currentRoomCodeLabel').innerText = activeRoomCode;
       document.getElementById('shareModalRoomCode').innerText = activeRoomCode;
@@ -1284,6 +1708,7 @@
       renderOverviewStats();
       renderPlayerCards();
       renderSettlement();
+      renderHistory();
 
       if (currentTab === 'records') {
         renderRecordsTab();
@@ -1308,6 +1733,8 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p) return;
       p.buyins.push(amount);
+      const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+      logBuyinEvent(p.name, amount, 'REBUY', totalBuy);
       syncAllTimeRecordsFromCurrent();
       broadcastStateChange();
       showToast(`${p.name} rebought +${window.tableState.currency}${amount}`, "🪙");
@@ -1321,6 +1748,8 @@
         const num = parseFloat(val);
         if (!isNaN(num) && num > 0) {
           p.buyins.push(num);
+          const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+          logBuyinEvent(p.name, num, 'REBUY', totalBuy);
           syncAllTimeRecordsFromCurrent();
           broadcastStateChange();
           showToast(`${p.name} added ${window.tableState.currency}${num}`, "🪙");
@@ -1332,8 +1761,55 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p || p.buyins.length <= 1) return;
       const removed = p.buyins.pop();
+      // Remove the matching event from history if it exists
+      if (Array.isArray(window.tableState.buyinHistory)) {
+        const idx = window.tableState.buyinHistory.findIndex(h => h.player === p.name && Math.abs(h.amount - removed) < 0.01);
+        if (idx !== -1) {
+          window.tableState.buyinHistory.splice(idx, 1);
+        }
+      }
       broadcastStateChange();
       showToast(`Removed last rebuy of ${window.tableState.currency}${removed} for ${p.name}`, "↩️");
+    };
+
+    window.clearHistoryLog = function() {
+      if (confirm("Clear buy-in history log for this session?")) {
+        window.tableState.buyinHistory = [];
+        broadcastStateChange();
+        showToast("Buy-in log cleared", "🗑️");
+      }
+    };
+
+    window.copyHistoryLog = function() {
+      const hist = window.tableState.buyinHistory || [];
+      if (hist.length === 0) {
+        showToast("No history entries to copy", "⚠️");
+        return;
+      }
+
+      let text = `📜 *POKER OG'S &bull; BUY-IN & REBUY LOG*\n`;
+      text += `🏷️ Room: ${activeRoomCode}\n`;
+      text += `📅 Date: ${new Date().toLocaleDateString()}\n\n`;
+
+      hist.forEach((h, i) => {
+        text += `${i + 1}. [${h.time}] ${h.player}: +${window.tableState.currency}${h.amount.toFixed(2)} (${h.type === 'INITIAL' ? 'Initial Buy-in' : 'Rebuy'} | Total: ${window.tableState.currency}${h.totalAfter ? h.totalAfter.toFixed(2) : h.amount.toFixed(2)})\n`;
+      });
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        showToast("Buy-in log copied for chat!", "📋");
+      } catch (e) {
+        showToast("Failed to copy log", "❌");
+      } finally {
+        document.body.removeChild(textarea);
+      }
     };
 
     window.updateCashout = function(playerId, value) {
@@ -1408,6 +1884,12 @@
         hasCashedOut: false
       }));
 
+      // Initialize initial buyins for the new session in history
+      window.tableState.buyinHistory = [];
+      window.tableState.players.forEach(p => {
+        logBuyinEvent(p.name, window.tableState.defaultBuyin || 20, 'INITIAL', window.tableState.defaultBuyin || 20);
+      });
+
       broadcastStateChange();
       renderRecordsTab();
       showToast("Session archived! Records updated across all connected devices.", "🏆");
@@ -1429,26 +1911,144 @@
     window.switchTab = function(tab) {
       currentTab = tab;
       const viewGame = document.getElementById('viewCurrentGame');
+      const viewHistory = document.getElementById('viewHistory');
       const viewRecords = document.getElementById('viewAllTimeRecords');
       const btnGame = document.getElementById('tabGameBtn');
+      const btnHistory = document.getElementById('tabHistoryBtn');
       const btnRecords = document.getElementById('tabRecordsBtn');
+
+      // Hide all views first
+      viewGame.classList.add('hidden');
+      if (viewHistory) viewHistory.classList.add('hidden');
+      viewRecords.classList.add('hidden');
+
+      // Reset button styles
+      btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+      if (btnHistory) btnHistory.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+      btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
 
       if (tab === 'game') {
         viewGame.classList.remove('hidden');
-        viewRecords.classList.add('hidden');
         btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
-        btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
-      } else {
-        viewGame.classList.add('hidden');
+      } else if (tab === 'history') {
+        if (viewHistory) viewHistory.classList.remove('hidden');
+        if (btnHistory) btnHistory.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        renderHistory();
+      } else if (tab === 'records') {
         viewRecords.classList.remove('hidden');
         btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
-        btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
         renderRecordsTab();
       }
     };
 
     window.closeModal = function(id) {
       document.getElementById(id).classList.add('hidden');
+    };
+
+    window.openChipModal = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+
+      currentCountingPlayerId = playerId;
+      document.getElementById('chipModalPlayerName').innerText = p.name;
+
+      // Load previous counts if available, otherwise initialize to zero
+      activeChipCounts = p.chipCounts ? { ...p.chipCounts } : { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 };
+      CHIP_DENOMINATIONS.forEach(d => {
+        if (typeof activeChipCounts[d.id] !== 'number') activeChipCounts[d.id] = 0;
+      });
+
+      renderChipModalRows();
+      document.getElementById('chipModal').classList.remove('hidden');
+    };
+
+    function renderChipModalRows() {
+      const container = document.getElementById('chipRowsContainer');
+      container.innerHTML = '';
+      let runningTotal = 0;
+
+      CHIP_DENOMINATIONS.forEach(d => {
+        const qty = activeChipCounts[d.id] || 0;
+        const subtotal = Math.round(qty * d.val * 100) / 100;
+        runningTotal += subtotal;
+
+        const row = document.createElement('div');
+        row.className = "bg-felt-800/80 border border-felt-700/80 p-2.5 rounded-xl flex items-center justify-between gap-2";
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5 min-w-[125px]">
+            <div class="w-8 h-8 rounded-full ${d.chipBg} border-2 flex items-center justify-center font-bold text-[10px] shadow flex-shrink-0">
+              ${window.tableState.currency}${d.val < 1 ? d.val.toFixed(2) : d.val}
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white">${d.name}</div>
+              <div class="text-[10px] text-gray-400">${window.tableState.currency}${d.val.toFixed(2)} ea</div>
+            </div>
+          </div>
+
+          <!-- Quick Increment Buttons and Quantity Input -->
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="window.adjustChipCount('${d.id}', -1)" class="w-7 h-7 bg-felt-700 hover:bg-felt-600 text-gray-200 rounded font-bold text-xs flex items-center justify-center transition border border-felt-600">-</button>
+            <input 
+              type="number" 
+              min="0" 
+              value="${qty}" 
+              onchange="window.inputChipCount('${d.id}', this.value)"
+              class="w-12 bg-felt-900 border border-felt-600 rounded text-center text-white text-xs font-mono font-bold py-1 focus:outline-none focus:ring-1 focus:ring-gold-400"
+            >
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 1)" class="w-7 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-bold text-xs flex items-center justify-center transition border border-felt-600">+1</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 5)" class="px-1.5 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-semibold text-[11px] flex items-center justify-center transition border border-felt-600">+5</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 10)" class="px-1.5 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-semibold text-[11px] flex items-center justify-center transition border border-felt-600">+10</button>
+          </div>
+
+          <div class="text-right min-w-[55px] flex-shrink-0">
+            <span class="font-mono text-xs font-bold text-gold-300">${window.tableState.currency}${subtotal.toFixed(2)}</span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.getElementById('chipModalTotalDisplay').innerText = `${window.tableState.currency}${runningTotal.toFixed(2)}`;
+    }
+
+    window.adjustChipCount = function(chipId, delta) {
+      const current = activeChipCounts[chipId] || 0;
+      activeChipCounts[chipId] = Math.max(0, current + delta);
+      renderChipModalRows();
+    };
+
+    window.inputChipCount = function(chipId, value) {
+      const parsed = parseInt(value, 10);
+      activeChipCounts[chipId] = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+      renderChipModalRows();
+    };
+
+    window.resetChipCounts = function() {
+      CHIP_DENOMINATIONS.forEach(d => {
+        activeChipCounts[d.id] = 0;
+      });
+      renderChipModalRows();
+    };
+
+    window.applyChipCountsToCashout = function() {
+      if (!currentCountingPlayerId) return;
+      const p = window.tableState.players.find(x => x.id === currentCountingPlayerId);
+      if (!p) return;
+
+      let total = 0;
+      CHIP_DENOMINATIONS.forEach(d => {
+        const qty = activeChipCounts[d.id] || 0;
+        total += qty * d.val;
+      });
+
+      total = Math.round(total * 100) / 100;
+      p.chipCounts = { ...activeChipCounts };
+      p.hasCashedOut = true;
+      p.cashout = total;
+
+      syncAllTimeRecordsFromCurrent();
+      broadcastStateChange();
+      closeModal('chipModal');
+      showToast(`${p.name}'s stack set to ${window.tableState.currency}${total.toFixed(2)}`, "🧮");
     };
 
     window.copyShareableLink = function() {
@@ -1575,7 +2175,7 @@
       text += `💰 Total Buy-ins: ${window.tableState.currency}${totalBuyins.toFixed(2)}\n`;
       text += `🪙 Total Cashed Out: ${window.tableState.currency}${totalCashouts.toFixed(2)}\n`;
       if (window.tableState.rakeEnabled) {
-        text += `🏦 House Rake: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player)\n`;
+        text += `🏦 House Rake: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player deducted upfront from starting stack)\n`;
       }
       text += `⚖️ Balance Status: ${Math.abs(diff) < 0.01 ? 'Balanced (Zero Discrepancy)' : `⚠ Off by ${window.tableState.currency}${diff.toFixed(2)}`}\n\n`;
 
@@ -1587,7 +2187,7 @@
         const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === p.id);
         const symbol = net >= 0 ? '+' : '';
         const collectorTag = isCollector ? ' [HOST]' : '';
-        const rakeTag = window.tableState.rakeEnabled ? ` (Rake: -${window.tableState.currency}${perPersonRake})` : '';
+        const rakeTag = window.tableState.rakeEnabled ? ` (Chips start: ${window.tableState.currency}${Math.max(0, buy - perPersonRake)})` : '';
         text += `• ${p.name}${collectorTag}: In ${window.tableState.currency}${buy} ➔ Out ${window.tableState.currency}${cash}${rakeTag} | Net: ${symbol}${window.tableState.currency}${net.toFixed(2)}\n`;
       });
 
@@ -1595,9 +2195,38 @@
       if (transactions.length === 0) {
         text += `Everyone broke even or stacks not entered yet.\n`;
       } else {
-        transactions.forEach(t => {
-          text += `👉 ${t.from} pays ${t.to}: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
-        });
+        if (window.tableState.rakeCollector === 'HOUSE') {
+          text += `🏛️ *Centralized House Bank Settlement:*\n`;
+          const intoHouse = transactions.filter(t => t.to.includes('House Account'));
+          const outOfHouse = transactions.filter(t => t.from.includes('House Account'));
+
+          if (intoHouse.length > 0) {
+            text += `\n📥 *Pay into House Account:*\n`;
+            intoHouse.forEach(t => {
+              text += `• ${t.from} pays House Account: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
+            });
+          }
+
+          if (outOfHouse.length > 0) {
+            text += `\n📤 *House Account Payouts:*\n`;
+            outOfHouse.forEach(t => {
+              text += `• House Account pays ${t.to}: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
+            });
+          }
+
+          if (window.tableState.rakeCollector === 'HOUSE' && (window.tableState.rakeEnabled || diff > 0.009)) {
+            if (diff > 0.009) {
+              const adjustedRetained = Math.round((totalRake - diff) * 100) / 100;
+              text += `\n🚨 *House Retained Rake (Adjusted for Surplus):* ${adjustedRetained < 0 ? '-' : ''}${window.tableState.currency}${Math.abs(adjustedRetained).toFixed(2)} (Expected ${window.tableState.currency}${totalRake.toFixed(2)} - ${window.tableState.currency}${diff.toFixed(2)} surplus)\n`;
+            } else if (window.tableState.rakeEnabled && totalRake > 0) {
+              text += `\n🏦 *House Retained Rake:* ${window.tableState.currency}${totalRake.toFixed(2)}\n`;
+            }
+          }
+        } else {
+          transactions.forEach(t => {
+            text += `👉 ${t.from} pays ${t.to}: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
+          });
+        }
       }
 
       text += `\n*🏆 ALL-TIME RECORDS:*\n`;
@@ -1717,6 +2346,7 @@
             hasCashedOut: false
           };
           window.tableState.players.push(newPlayer);
+          logBuyinEvent(name, buyin, 'INITIAL', buyin);
           syncAllTimeRecordsFromCurrent();
           broadcastStateChange();
           window.closeModal('playerModal');
