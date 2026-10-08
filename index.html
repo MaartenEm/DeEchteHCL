@@ -479,7 +479,7 @@
 
         <div id="modalBuyinGroup">
           <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Initial Buy-in (<span class="currencySymbol">€</span>)</label>
-          <input type="number" id="modalInitialBuyin" min="0" step="any" required class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <input type="number" id="modalInitialBuyin" min="0" step="any" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
         </div>
 
         <div class="pt-3 flex gap-2">
@@ -1284,14 +1284,14 @@
             <!-- Header: Avatar, Name & Edit -->
             <div class="flex items-center justify-between pb-3 border-b border-white/10">
               <div class="flex items-center space-x-3 overflow-hidden">
-                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/10 overflow-hidden relative" style="background-color: ${p.color};">
+                <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-base shadow-md ring-2 ring-white/10 overflow-hidden relative" style="background-color: ${p.color};">
                   <img 
                     src="${encodeURIComponent(p.name)}.JPEG" 
                     alt="${escapeHtml(p.name)}" 
                     class="w-full h-full object-cover object-center"
                     onerror="if(!this.dataset.triedJpg){ this.dataset.triedJpg='1'; this.src='${encodeURIComponent(p.name)}.jpg'; } else { this.style.display='none'; const fb = this.nextElementSibling; if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); } }"
                   />
-                  <div class="w-full h-full items-center justify-center text-white font-bold text-sm absolute inset-0 hidden" style="background-color: ${p.color};">
+                  <div class="w-full h-full items-center justify-center text-white font-bold text-base absolute inset-0 hidden" style="background-color: ${p.color};">
                     ${escapeHtml(p.name.charAt(0).toUpperCase())}
                   </div>
                 </div>
@@ -1862,7 +1862,10 @@
       document.getElementById('modalTitle').innerText = 'Edit Player';
       document.getElementById('modalPlayerId').value = p.id;
       document.getElementById('modalPlayerName').value = p.name;
-      document.getElementById('modalBuyinGroup').classList.add('hidden');
+      const buyinGroup = document.getElementById('modalBuyinGroup');
+      if (buyinGroup) buyinGroup.classList.add('hidden');
+      const buyinInput = document.getElementById('modalInitialBuyin');
+      if (buyinInput) buyinInput.required = false;
       document.getElementById('savePlayerSubmitBtn').innerText = 'Update Player';
 
       selectedColor = p.color || COLOR_PRESETS[0].hex;
@@ -2315,8 +2318,13 @@
         document.getElementById('modalTitle').innerText = 'Add New Player';
         document.getElementById('modalPlayerId').value = '';
         document.getElementById('modalPlayerName').value = '';
-        document.getElementById('modalBuyinGroup').classList.remove('hidden');
-        document.getElementById('modalInitialBuyin').value = window.tableState.defaultBuyin || 20;
+        const buyinGroup = document.getElementById('modalBuyinGroup');
+        if (buyinGroup) buyinGroup.classList.remove('hidden');
+        const buyinInput = document.getElementById('modalInitialBuyin');
+        if (buyinInput) {
+          buyinInput.value = window.tableState.defaultBuyin || 20;
+          buyinInput.required = true;
+        }
         document.getElementById('savePlayerSubmitBtn').innerText = 'Add Player';
 
         selectedColor = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)].hex;
@@ -2337,8 +2345,19 @@
         if (editId) {
           const existing = window.tableState.players.find(p => p.id === editId);
           if (existing) {
+            const oldName = existing.name;
             existing.name = name;
             existing.color = selectedColor;
+
+            // Also update player name in buy-in history log if renamed
+            if (Array.isArray(window.tableState.buyinHistory)) {
+              window.tableState.buyinHistory.forEach(h => {
+                if (h.player === oldName) {
+                  h.player = name;
+                }
+              });
+            }
+
             broadcastStateChange();
             window.closeModal('playerModal');
             showToast(`Updated player "${name}"`, "✏️");
