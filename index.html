@@ -580,6 +580,26 @@
     </div>
   </div>
 
+  <!-- Modal: Large Photo Lightbox -->
+  <div id="photoModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) window.closeModal('photoModal')">
+    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+      <button type="button" onclick="window.closeModal('photoModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      
+      <h3 id="photoModalName" class="text-xl font-bold font-serif text-amber-200 mb-4">Player Photo</h3>
+
+      <div class="w-56 h-56 sm:w-64 sm:h-64 mx-auto rounded-2xl overflow-hidden border-2 border-gold-400/60 shadow-xl bg-black/50 flex items-center justify-center relative">
+        <img id="photoModalImg" src="" alt="Player Photo" class="w-full h-full object-cover object-center" />
+        <div id="photoModalFallback" class="w-full h-full hidden items-center justify-center text-white text-6xl font-bold font-serif"></div>
+      </div>
+
+      <div class="mt-5">
+        <button type="button" onclick="window.closeModal('photoModal')" class="w-full py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification element -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-felt-800 border border-gold-400/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 pointer-events-none">
     <span id="toastIcon">✨</span>
@@ -1284,7 +1304,12 @@
             <!-- Header: Avatar, Name & Edit -->
             <div class="flex items-center justify-between pb-3 border-b border-white/10">
               <div class="flex items-center space-x-3 overflow-hidden">
-                <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-base shadow-md ring-2 ring-white/10 overflow-hidden relative" style="background-color: ${p.color};">
+                <div 
+                  class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-base shadow-md ring-2 ring-white/10 hover:ring-gold-400 hover:scale-105 transition-all cursor-pointer overflow-hidden relative group/avatar" 
+                  style="background-color: ${p.color};"
+                  title="Click to view ${escapeHtml(p.name)}'s photo in large"
+                  onclick="window.openPhotoModal('${p.id}')"
+                >
                   <img 
                     src="${encodeURIComponent(p.name)}.JPEG" 
                     alt="${escapeHtml(p.name)}" 
@@ -1293,6 +1318,10 @@
                   />
                   <div class="w-full h-full items-center justify-center text-white font-bold text-base absolute inset-0 hidden" style="background-color: ${p.color};">
                     ${escapeHtml(p.name.charAt(0).toUpperCase())}
+                  </div>
+                  <!-- Magnifier overlay on hover -->
+                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-xs text-white transition-opacity">
+                    🔍
                   </div>
                 </div>
                 <div class="min-w-0">
@@ -1873,6 +1902,41 @@
 
       document.getElementById('playerModal').classList.remove('hidden');
       document.getElementById('modalPlayerName').focus();
+    };
+
+    window.openPhotoModal = function(playerId) {
+      const p = window.tableState.players.find(x => x.id === playerId);
+      if (!p) return;
+
+      const modal = document.getElementById('photoModal');
+      const title = document.getElementById('photoModalName');
+      const img = document.getElementById('photoModalImg');
+      const fallback = document.getElementById('photoModalFallback');
+
+      if (!modal || !title || !img || !fallback) return;
+
+      title.innerText = p.name;
+      img.style.display = 'block';
+      delete img.dataset.triedJpg;
+
+      fallback.classList.add('hidden');
+      fallback.classList.remove('flex');
+      fallback.style.backgroundColor = p.color || '#10b981';
+      fallback.innerText = p.name.charAt(0).toUpperCase();
+
+      img.onerror = function() {
+        if (!this.dataset.triedJpg) {
+          this.dataset.triedJpg = '1';
+          this.src = encodeURIComponent(p.name) + '.jpg';
+        } else {
+          this.style.display = 'none';
+          fallback.classList.remove('hidden');
+          fallback.classList.add('flex');
+        }
+      };
+
+      img.src = encodeURIComponent(p.name) + '.JPEG';
+      modal.classList.remove('hidden');
     };
 
     window.archiveCurrentSession = function() {
