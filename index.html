@@ -113,7 +113,7 @@
         </button>
       </div>
 
-      <!-- Navigation Tabs (Current Table vs All-Time Records) -->
+      <!-- Navigation Tabs (Current Table vs Logbook vs Records) -->
       <div class="flex items-center bg-felt-900 border border-felt-700 p-1 rounded-xl shadow-inner">
         <button id="tabGameBtn" onclick="switchTab('game')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow">
           <span>♠️</span>
@@ -121,7 +121,7 @@
         </button>
         <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
           <span>📜</span>
-          <span>History</span>
+          <span>Logbook</span>
           <span id="historyNavBadge" class="ml-0.5 bg-felt-700 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">0</span>
         </button>
         <button id="tabRecordsBtn" onclick="switchTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
@@ -142,7 +142,7 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- House Rake Configuration Bar (No mention of kitty or food & drink) -->
+      <!-- House Rake Configuration Bar -->
       <div class="bg-felt-900/90 border border-gold-500/30 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg">
@@ -277,7 +277,7 @@
 
     </div>
 
-    <!-- VIEW: REAL-TIME BUY-IN & REBUY HISTORY TAB -->
+    <!-- VIEW 2: REAL-TIME BUY-IN & REBUY LOGBOOK TAB -->
     <div id="viewHistory" class="hidden space-y-6">
       <div class="bg-[#181a1f] border border-zinc-700/80 rounded-2xl p-5 sm:p-7 shadow-2xl relative">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-zinc-700/80 gap-3">
@@ -287,17 +287,17 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">BUY-IN &amp; REBUY LOG</h2>
+                <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">BUY-IN &amp; REBUY LOGBOOK</h2>
                 <span id="historyLogCountBadge" class="text-xs bg-gold-500/20 text-gold-300 border border-gold-500/40 px-2 py-0.5 rounded-full font-bold">0 events</span>
               </div>
-              <p class="text-xs text-gray-400">Live chronological timeline of all buy-ins and rebuys with exact timestamps</p>
+              <p class="text-xs text-gray-400">Live chronological timeline of all buy-ins and rebuys with dates and exact timestamps</p>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
             <button onclick="window.copyHistoryLog()" class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold border border-zinc-600 transition flex items-center gap-1.5 shadow">
               <svg class="w-3.5 h-3.5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-              <span>Copy Log</span>
+              <span>Copy Logbook</span>
             </button>
             <button onclick="window.clearHistoryLog()" class="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-lg text-xs font-semibold border border-red-800/80 transition flex items-center gap-1">
               <span>Clear</span>
@@ -305,7 +305,7 @@
           </div>
         </div>
 
-        <!-- History Overview Statistics -->
+        <!-- Logbook Overview Statistics -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
             <span class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block mb-0.5">Total Rebuys</span>
@@ -336,7 +336,7 @@
       </div>
     </div>
 
-    <!-- VIEW 2: DEDICATED ANONYMOUS ALL-TIME RECORDS TAB (No player names, No Biggest Win) -->
+    <!-- VIEW 3: DEDICATED ANONYMOUS ALL-TIME RECORDS TAB -->
     <div id="viewAllTimeRecords" class="hidden space-y-6">
       <div class="bg-gradient-to-r from-felt-950 via-felt-900 to-felt-950 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-gold-500/20 gap-3">
@@ -657,7 +657,7 @@
         { id: '5', name: 'JJ', color: COLOR_PRESETS[4].hex, buyins: [20], cashout: 0, hasCashedOut: false }
       ],
       buyinHistory: [],
-      // Anonymous historical records (No player names, No Biggest Win)
+      // Anonymous historical records
       allTimeRecords: {
         biggestBuyin: { amount: 60, date: 'Oct 2026' },
         biggestLoss: { amount: 41, date: 'Sep 2026' },
@@ -718,7 +718,6 @@
       const currentVer = window.tableState.version || 0;
       const incomingVer = incomingState.version || 0;
 
-      // Only apply if incoming state is newer or same version with updated timestamp
       if (incomingVer > currentVer || (incomingVer === currentVer && (incomingState.lastUpdated || 0) > (window.tableState.lastUpdated || 0))) {
         window.tableState = {
           ...window.tableState,
@@ -729,12 +728,10 @@
       }
     }
 
-    // Initialize BroadcastChannel (for instant multi-tab sync on same origin) + HTTP Sync (for multi-device)
     function initSyncNetwork() {
       loadFromLocalStorage();
       renderAll();
 
-      // 1. Instant Local Mesh (for tabs on the same computer or phone)
       try {
         if (typeof BroadcastChannel !== 'undefined') {
           localChannel = new BroadcastChannel(`poker_channel_${activeRoomCode}`);
@@ -748,7 +745,6 @@
         console.warn("BroadcastChannel not supported", e);
       }
 
-      // Storage event listener as fallback for cross-tab sync
       window.addEventListener('storage', (e) => {
         if (e.key === `poker_table_${activeRoomCode}` && e.newValue) {
           try {
@@ -758,10 +754,8 @@
         }
       });
 
-      // 2. Multi-device sync using keyless HTTP/SSE (Zero WebSockets to prevent Canvas restrictions)
       const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
       
-      // Fetch recent messages on launch to catch up with friends
       fetch(`https://ntfy.sh/${topic}/json?poll=1&since=12h`, { cache: 'no-store' })
         .then(res => res.text())
         .then(text => {
@@ -782,7 +776,6 @@
           setSyncStatus(false, "Local Mode (Ready)");
         });
 
-      // Connect via Server-Sent Events (SSE) - Pure HTTP stream
       try {
         if (typeof EventSource !== 'undefined') {
           eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
@@ -799,7 +792,6 @@
             } catch(e) {}
           };
           eventSource.onerror = () => {
-            // If SSE fails or is restricted, fallback to light HTTP polling
             if (!pollInterval) {
               startHttpPolling(topic);
             }
@@ -844,14 +836,12 @@
       saveToLocalStorage();
       renderAll();
 
-      // 1. Broadcast locally
       if (localChannel) {
         try {
           localChannel.postMessage({ type: 'STATE_UPDATE', payload: window.tableState });
         } catch (e) {}
       }
 
-      // 2. Broadcast to friends over HTTPS POST (CORS enabled, keyless)
       const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
       try {
         await fetch(`https://ntfy.sh/${topic}`, {
@@ -898,7 +888,6 @@
       const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
       const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
 
-      // Rake is deducted upfront from starting chips. Cash-out chips redeem 1:1 against total buy-in cash.
       let net = cash - totalBuy;
       if (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id) {
         net += totalRakePool;
@@ -910,20 +899,15 @@
       const body = document.body;
       body.classList.remove('bg-table-neutral', 'bg-table-green', 'bg-table-red');
 
-      // Only evaluate green/red after all players have entered their end chip stack
       if (allCashedOut) {
         if (discrepancy < 3) {
-          // Less than 3€ discrepancy -> Turn the green it was before
           body.classList.add('bg-table-green');
         } else if (discrepancy > 5) {
-          // More than 5€ discrepancy -> Turn red
           body.classList.add('bg-table-red');
         } else {
-          // In-between (3€ to 5€) -> Maintain dark grey
           body.classList.add('bg-table-neutral');
         }
       } else {
-        // Active game / pending end chip stacks -> Default dark grey
         body.classList.add('bg-table-neutral');
       }
     }
@@ -958,14 +942,9 @@
     }
 
     function computeOptimalSettlement() {
-      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
-      const totalRakePool = window.tableState.players.length * perPersonRake;
-
-      // Centralized House Bank mode: Everyone pays the House Account, and the House Account pays the winners
       if (window.tableState.rakeCollector === 'HOUSE') {
         const transactions = [];
 
-        // Players with net losses pay the House Account
         window.tableState.players.forEach(p => {
           const net = getPlayerNet(p);
           if (net < -0.009) {
@@ -978,7 +957,6 @@
           }
         });
 
-        // House Account pays out players with net winnings
         window.tableState.players.forEach(p => {
           const net = getPlayerNet(p);
           if (net > 0.009) {
@@ -994,7 +972,6 @@
         return transactions;
       }
 
-      // Peer-to-peer greedy settlement when an individual player/host is the collector
       const balances = window.tableState.players.map(p => ({
         id: p.id,
         name: p.name,
@@ -1045,7 +1022,6 @@
       const diff = Math.round((totalAccounted - totalBuyins) * 100) / 100;
       const allCashedOut = window.tableState.players.length > 0 && completedCashoutsCount === window.tableState.players.length;
 
-      // Evaluate and transition page background color
       updateTableBackground(allCashedOut, Math.abs(diff));
 
       if (window.tableState.players.length === 0) {
@@ -1191,7 +1167,6 @@
         statRakeDesc.innerText = 'Rake turned off';
       }
 
-      // Live Session Biggest Winner / Loser
       let maxWin = 0;
       let topWinner = null;
       let maxLoss = 0;
@@ -1277,19 +1252,15 @@
         let cardColorClasses = '';
 
         if (!p.hasCashedOut) {
-          // Default neutral grey box during active game
           cardColorClasses = 'bg-[#181a1f] border-zinc-700/80 hover:border-zinc-500 shadow-xl';
           profitBadge = `<span class="px-2 py-0.5 text-xs font-semibold rounded bg-zinc-800 text-gray-400 border border-zinc-600">Active Game</span>`;
         } else if (roundedNet > 0.009) {
-          // In Profit: card turns distinct felt emerald green
           cardColorClasses = 'bg-[#062413] border-emerald-500/80 shadow-xl shadow-emerald-950/60 ring-1 ring-emerald-500/40';
           profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/90 text-emerald-300 border border-emerald-600 shadow">+${window.tableState.currency}${roundedNet.toFixed(2)}</span>`;
         } else if (roundedNet < -0.009) {
-          // In Loss: ultra-transparent red tint with delicate border
           cardColorClasses = 'bg-red-500/[0.06] border-red-500/30 shadow-xl shadow-red-950/10 ring-1 ring-red-500/20';
           profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-red-950/40 text-rose-300 border border-red-500/40 shadow-sm">-${window.tableState.currency}${Math.abs(roundedNet).toFixed(2)}</span>`;
         } else {
-          // Even (0.00): neutral slate/grey with even badge
           cardColorClasses = 'bg-[#181a1f] border-zinc-500 shadow-xl';
           profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-zinc-800 text-gray-300 border border-zinc-600">Even</span>`;
         }
@@ -1319,7 +1290,6 @@
                   <div class="w-full h-full items-center justify-center text-white font-bold text-base absolute inset-0 hidden" style="background-color: ${p.color};">
                     ${escapeHtml(p.name.charAt(0).toUpperCase())}
                   </div>
-                  <!-- Magnifier overlay on hover -->
                   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-xs text-white transition-opacity">
                     🔍
                   </div>
@@ -1350,7 +1320,7 @@
                   ${isMySeat ? 'My Seat ✓' : 'Claim'}
                 </button>
                 <button onclick="window.openEditPlayerModal('${p.id}')" title="Edit player" class="text-gray-400 hover:text-gold-400 p-1 rounded transition">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
                 <button onclick="window.removePlayer('${p.id}')" title="Remove Player" class="text-gray-400 hover:text-red-400 p-1 rounded transition">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -1510,7 +1480,7 @@
         list.appendChild(warning);
       }
 
-        transactions.forEach((tx) => {
+      transactions.forEach((tx) => {
         const isHouseTarget = tx.to.includes('House Account');
         const isHouseSource = tx.from.includes('House Account');
         const item = document.createElement('div');
@@ -1519,17 +1489,14 @@
         let desc = 'Direct player payout';
 
         if (isHouseSource) {
-          // House paying winners: clean emerald opacity
           cardBg = 'bg-emerald-500/15 border-emerald-500/60 shadow-lg hover:border-emerald-400';
           icon = '📤';
           desc = 'Net winnings paid out by House Account';
         } else if (isHouseTarget) {
-          // Players paying House: very transparent subtle red
           cardBg = 'bg-red-500/[0.06] border-red-500/30 shadow-lg hover:border-red-400/50';
           icon = '📥';
           desc = 'Net loss paid into House Account';
         } else {
-          // Peer-to-peer: clean dark card with subtle opacity
           cardBg = 'bg-zinc-800/80 border-zinc-600 hover:border-gold-400/80 shadow-lg';
         }
 
@@ -1558,8 +1525,6 @@
         list.appendChild(item);
       });
 
-      // When House Account is the central bank, show the retained house profit summary
-      // If there is an unbalanced surplus, adjust the retained rake and turn the entry RED
       if (window.tableState.rakeCollector === 'HOUSE' && (window.tableState.rakeEnabled || diff > 0.009) && (totalRake > 0 || diff > 0.009)) {
         const hasSurplus = diff > 0.009;
         const adjustedRetained = Math.round((totalRake - (hasSurplus ? diff : 0)) * 100) / 100;
@@ -1600,7 +1565,6 @@
       const rec = window.tableState.allTimeRecords;
       const sym = window.tableState.currency;
 
-      // Pure monetary amount and date logs (Strictly no player names, no biggest win)
       document.getElementById('hofBiggestBuyinAmt').innerText = `${sym}${parseFloat(rec.biggestBuyin.amount || 0).toFixed(2)}`;
       document.getElementById('hofBiggestBuyinDate').innerText = rec.biggestBuyin.date ? `Recorded: ${rec.biggestBuyin.date}` : 'No date recorded';
 
@@ -1622,8 +1586,11 @@
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+
       const entry = {
         id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+        date: dateStr,
         time: timeStr,
         timestamp: Date.now(),
         player: playerName,
@@ -1644,7 +1611,6 @@
       if (badge) badge.innerText = hist.length;
       if (countBadge) countBadge.innerText = `${hist.length} event${hist.length === 1 ? '' : 's'}`;
 
-      // Calculate statistics
       let rebuysOnly = hist.filter(h => h.type !== 'INITIAL');
       let rebuyVolume = rebuysOnly.reduce((acc, h) => acc + (parseFloat(h.amount) || 0), 0);
 
@@ -1676,7 +1642,7 @@
 
       if (hist.length > 0) {
         if (statLatest) statLatest.innerText = hist[0].time;
-        if (statLatestDesc) statLatestDesc.innerText = `${hist[0].player} (+${window.tableState.currency}${hist[0].amount})`;
+        if (statLatestDesc) statLatestDesc.innerText = `${hist[0].date ? hist[0].date + ' · ' : ''}${hist[0].player} (+${window.tableState.currency}${hist[0].amount})`;
       } else {
         if (statLatest) statLatest.innerText = '-';
         if (statLatestDesc) statLatestDesc.innerText = 'No events logged';
@@ -1689,14 +1655,14 @@
         historyList.innerHTML = `
           <div class="py-12 text-center text-gray-400 bg-zinc-900/40 rounded-xl border border-dashed border-zinc-800">
             <span class="text-3xl block mb-2">📜</span>
-            <p class="text-sm font-semibold text-gray-300">No Buy-ins Logged Yet</p>
-            <p class="text-xs text-gray-500 mt-1">When Maarten, Lucas, or other players rebuy at the table, their rebuys and exact time will appear here.</p>
+            <p class="text-sm font-semibold text-gray-300">No Buy-ins Logged in Logbook</p>
+            <p class="text-xs text-gray-500 mt-1">When players buy in or rebuy at the table, their entries with date and exact time will appear here.</p>
           </div>
         `;
         return;
       }
 
-      hist.forEach((entry, idx) => {
+      hist.forEach((entry) => {
         const isInitial = entry.type === 'INITIAL';
         const card = document.createElement('div');
         card.className = `p-3.5 sm:p-4 rounded-xl border transition flex items-center justify-between shadow ${
@@ -1714,12 +1680,14 @@
                 <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30'}">
                   ${isInitial ? 'Seated' : 'Rebuy'}
                 </span>
-                <span class="font-mono text-xs text-gray-400 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  ${entry.time}
+                <span class="font-mono text-xs text-gray-400 flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/5">
+                  <span class="text-gold-400/80 font-sans font-semibold">${escapeHtml(entry.date || '')}</span>
+                  <span class="text-gray-500">&bull;</span>
+                  <svg class="w-3 h-3 text-gray-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span>${entry.time}</span>
                 </span>
               </div>
-              <p class="text-xs text-gray-400 mt-0.5">
+              <p class="text-xs text-gray-400 mt-1">
                 Total table buy-in after this: <span class="font-mono text-gray-200 font-semibold">${window.tableState.currency}${entry.totalAfter ? entry.totalAfter.toFixed(2) : entry.amount.toFixed(2)}</span>
               </p>
             </div>
@@ -1798,7 +1766,6 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p || p.buyins.length <= 1) return;
       const removed = p.buyins.pop();
-      // Remove the matching event from history if it exists
       if (Array.isArray(window.tableState.buyinHistory)) {
         const idx = window.tableState.buyinHistory.findIndex(h => h.player === p.name && Math.abs(h.amount - removed) < 0.01);
         if (idx !== -1) {
@@ -1810,26 +1777,27 @@
     };
 
     window.clearHistoryLog = function() {
-      if (confirm("Clear buy-in history log for this session?")) {
+      if (confirm("Clear buy-in logbook for this session?")) {
         window.tableState.buyinHistory = [];
         broadcastStateChange();
-        showToast("Buy-in log cleared", "🗑️");
+        showToast("Logbook cleared", "🗑️");
       }
     };
 
     window.copyHistoryLog = function() {
       const hist = window.tableState.buyinHistory || [];
       if (hist.length === 0) {
-        showToast("No history entries to copy", "⚠️");
+        showToast("No logbook entries to copy", "⚠️");
         return;
       }
 
-      let text = `📜 *POKER OG'S &bull; BUY-IN & REBUY LOG*\n`;
+      let text = `📜 *POKER OG'S &bull; BUY-IN & REBUY LOGBOOK*\n`;
       text += `🏷️ Room: ${activeRoomCode}\n`;
-      text += `📅 Date: ${new Date().toLocaleDateString()}\n\n`;
+      text += `📅 Export Date: ${new Date().toLocaleDateString()}\n\n`;
 
       hist.forEach((h, i) => {
-        text += `${i + 1}. [${h.time}] ${h.player}: +${window.tableState.currency}${h.amount.toFixed(2)} (${h.type === 'INITIAL' ? 'Initial Buy-in' : 'Rebuy'} | Total: ${window.tableState.currency}${h.totalAfter ? h.totalAfter.toFixed(2) : h.amount.toFixed(2)})\n`;
+        const datePart = h.date ? `${h.date} ` : '';
+        text += `${i + 1}. [${datePart}${h.time}] ${h.player}: +${window.tableState.currency}${h.amount.toFixed(2)} (${h.type === 'INITIAL' ? 'Initial Buy-in' : 'Rebuy'} | Total: ${window.tableState.currency}${h.totalAfter ? h.totalAfter.toFixed(2) : h.amount.toFixed(2)})\n`;
       });
 
       const textarea = document.createElement("textarea");
@@ -1841,9 +1809,9 @@
 
       try {
         document.execCommand('copy');
-        showToast("Buy-in log copied for chat!", "📋");
+        showToast("Logbook copied for chat!", "📋");
       } catch (e) {
-        showToast("Failed to copy log", "❌");
+        showToast("Failed to copy logbook", "❌");
       } finally {
         document.body.removeChild(textarea);
       }
@@ -1951,7 +1919,6 @@
       syncAllTimeRecordsFromCurrent();
       window.tableState.allTimeRecords.totalSessions = (window.tableState.allTimeRecords.totalSessions || 0) + 1;
 
-      // Keep roster, reset active buyins & stacks
       window.tableState.players = window.tableState.players.map(p => ({
         ...p,
         buyins: [window.tableState.defaultBuyin || 20],
@@ -1959,7 +1926,6 @@
         hasCashedOut: false
       }));
 
-      // Initialize initial buyins for the new session in history
       window.tableState.buyinHistory = [];
       window.tableState.players.forEach(p => {
         logBuyinEvent(p.name, window.tableState.defaultBuyin || 20, 'INITIAL', window.tableState.defaultBuyin || 20);
@@ -1992,12 +1958,10 @@
       const btnHistory = document.getElementById('tabHistoryBtn');
       const btnRecords = document.getElementById('tabRecordsBtn');
 
-      // Hide all views first
       viewGame.classList.add('hidden');
       if (viewHistory) viewHistory.classList.add('hidden');
       viewRecords.classList.add('hidden');
 
-      // Reset button styles
       btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
       if (btnHistory) btnHistory.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
       btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
@@ -2027,7 +1991,6 @@
       currentCountingPlayerId = playerId;
       document.getElementById('chipModalPlayerName').innerText = p.name;
 
-      // Load previous counts if available, otherwise initialize to zero
       activeChipCounts = p.chipCounts ? { ...p.chipCounts } : { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 };
       CHIP_DENOMINATIONS.forEach(d => {
         if (typeof activeChipCounts[d.id] !== 'number') activeChipCounts[d.id] = 0;
@@ -2060,7 +2023,6 @@
             </div>
           </div>
 
-          <!-- Quick Increment Buttons and Quantity Input -->
           <div class="flex items-center gap-1">
             <button type="button" onclick="window.adjustChipCount('${d.id}', -1)" class="w-7 h-7 bg-felt-700 hover:bg-felt-600 text-gray-200 rounded font-bold text-xs flex items-center justify-center transition border border-felt-600">-</button>
             <input 
@@ -2315,19 +2277,16 @@
       initColorPicker();
       initSyncNetwork();
 
-      // Share Modal QR Generator
       document.getElementById('openShareModalBtn').addEventListener('click', () => {
         generateQrCodeForRoom();
         document.getElementById('shareModal').classList.remove('hidden');
       });
 
-      // Room modal trigger
       document.getElementById('openRoomModalBtn').addEventListener('click', () => {
         document.getElementById('inputRoomCode').value = activeRoomCode;
         document.getElementById('roomModal').classList.remove('hidden');
       });
 
-      // Room Form Switch
       document.getElementById('roomForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const code = document.getElementById('inputRoomCode').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
@@ -2338,12 +2297,10 @@
         }
       });
 
-      // Clickable room code header to copy link
       document.getElementById('currentRoomCodeLabel').addEventListener('click', () => {
         window.copyShareableLink();
       });
 
-      // Default Buyin Input (€20 default)
       const defBuyinInput = document.getElementById('defaultBuyinInput');
       defBuyinInput.value = window.tableState.defaultBuyin || 20;
       defBuyinInput.addEventListener('change', (e) => {
@@ -2354,7 +2311,6 @@
         }
       });
 
-      // Rake Toggle
       const rakeToggle = document.getElementById('rakeToggle');
       rakeToggle.addEventListener('change', (e) => {
         window.tableState.rakeEnabled = e.target.checked;
@@ -2362,7 +2318,6 @@
         showToast(window.tableState.rakeEnabled ? "House Rake enabled" : "Rake disabled", "🏦");
       });
 
-      // Rake Amount Per Person
       const rakeInput = document.getElementById('rakePerPersonInput');
       rakeInput.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
@@ -2370,14 +2325,12 @@
         broadcastStateChange();
       });
 
-      // Rake Collector Select
       const collectorSelect = document.getElementById('rakeCollectorSelect');
       collectorSelect.addEventListener('change', (e) => {
         window.tableState.rakeCollector = e.target.value;
         broadcastStateChange();
       });
 
-      // Add Player Button
       document.getElementById('addPlayerBtn').addEventListener('click', () => {
         document.getElementById('modalTitle').innerText = 'Add New Player';
         document.getElementById('modalPlayerId').value = '';
@@ -2398,7 +2351,6 @@
         document.getElementById('modalPlayerName').focus();
       });
 
-      // Player Form Submit
       document.getElementById('playerForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const editId = document.getElementById('modalPlayerId').value;
@@ -2413,7 +2365,6 @@
             existing.name = name;
             existing.color = selectedColor;
 
-            // Also update player name in buy-in history log if renamed
             if (Array.isArray(window.tableState.buyinHistory)) {
               window.tableState.buyinHistory.forEach(h => {
                 if (h.player === oldName) {
@@ -2445,7 +2396,6 @@
         }
       });
 
-      // All-Time Records Form Submit (Pure amounts, no names)
       document.getElementById('hofForm').addEventListener('submit', (e) => {
         e.preventDefault();
         window.tableState.allTimeRecords.biggestBuyin = {
@@ -2462,7 +2412,6 @@
         showToast("All-Time Records saved", "🏆");
       });
 
-      // Copy summary to clipboard
       document.getElementById('copySummaryBtn').addEventListener('click', () => {
         const summary = generateTextSummary();
         const textarea = document.createElement("textarea");
