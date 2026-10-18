@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Poker Night Ledger &bull; Live Table</title>
+  <title>Poker OG's &bull; Live Table Ledger</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <!-- QRCode generation library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -18,23 +18,26 @@
         extend: {
           colors: {
             felt: {
-              950: '#040d07',
-              900: '#07180f',
-              800: '#0c2417',
-              700: '#143825',
-              600: '#1a4730',
-              500: '#23593d',
+              950: '#030906',
+              900: '#06130c',
+              800: '#0a1f14',
+              700: '#113020',
+              600: '#18422c',
+              500: '#21573b',
             },
             gold: {
+              200: '#fef08a',
               300: '#fde047',
               400: '#f5c35f',
               500: '#e5aa38',
-              600: '#c48924'
+              600: '#c48924',
+              700: '#9a6715'
             }
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
-            serif: ['Cinzel', 'serif']
+            serif: ['Cinzel', 'serif'],
+            mono: ['JetBrains Mono', 'monospace']
           }
         }
       }
@@ -43,55 +46,103 @@
   <style>
     body {
       color: #f3f4f6;
-      transition: background-color 0.6s ease, background-image 0.6s ease;
+      transition: background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1), background-image 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-x: hidden;
     }
-    /* Default dark grey background */
+    /* Default luxury obsidian slate background */
     .bg-table-neutral {
-      background-color: #121417;
-      background-image: radial-gradient(rgba(75, 85, 99, 0.35) 1px, transparent 0);
-      background-size: 22px 22px;
+      background-color: #0d0f12;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(229, 170, 56, 0.08), transparent 60%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 0);
+      background-size: 100% 100%, 24px 24px;
     }
-    /* Original felt green background (balanced / discrepancy < 3€) */
+    /* Balanced Casino Felt Green background (discrepancy < 3€) */
     .bg-table-green {
-      background-color: #05100a;
-      background-image: radial-gradient(rgba(35, 89, 61, 0.45) 1px, transparent 0);
-      background-size: 22px 22px;
+      background-color: #041109;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.16), transparent 65%),
+        radial-gradient(rgba(35, 89, 61, 0.45) 1px, transparent 0);
+      background-size: 100% 100%, 24px 24px;
     }
     /* High alert crimson red background (discrepancy > 5€) */
     .bg-table-red {
-      background-color: #170507;
-      background-image: radial-gradient(rgba(185, 28, 28, 0.45) 1px, transparent 0);
-      background-size: 22px 22px;
+      background-color: #160406;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.16), transparent 65%),
+        radial-gradient(rgba(185, 28, 28, 0.4) 1px, transparent 0);
+      background-size: 100% 100%, 24px 24px;
     }
-    @keyframes pulse-live {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.8; }
+    /* Subtle glassmorphism and card polish */
+    .casino-card {
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
     }
-    .live-pulse {
-      animation: pulse-live 2s infinite ease-in-out;
+    .casino-card:hover {
+      transform: translateY(-2px);
+    }
+    /* Semi-transparent gold button style */
+    .gold-shimmer {
+      background: linear-gradient(135deg, rgba(253, 224, 71, 0.22) 0%, rgba(229, 170, 56, 0.28) 50%, rgba(196, 137, 36, 0.34) 100%);
+      border: 1px solid rgba(245, 195, 95, 0.5);
+      color: #fef08a;
+      backdrop-filter: blur(8px);
+    }
+    .gold-shimmer:hover {
+      background: linear-gradient(135deg, rgba(253, 224, 71, 0.32) 0%, rgba(229, 170, 56, 0.38) 50%, rgba(196, 137, 36, 0.45) 100%);
+      border-color: rgba(253, 224, 71, 0.75);
+    }
+    /* Solid gold accent for circular logo ring */
+    .gold-ring-solid {
+      background: linear-gradient(135deg, #fde047 0%, #e5aa38 50%, #c48924 100%);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090b0e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e5aa38;
+    }
+    @keyframes float-slow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    .animate-float {
+      animation: float-slow 3.5s ease-in-out infinite;
     }
   </style>
 </head>
 <body class="bg-table-neutral min-h-screen font-sans flex flex-col justify-between selection:bg-gold-500 selection:text-black">
 
-  <header class="border-b border-felt-700/80 bg-black/85 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-lg">
+  <header class="border-b border-white/10 bg-[#090b0e]/85 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-6 py-3 shadow-2xl">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <!-- Logo & App Title -->
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-600 via-gold-400 to-amber-200 p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 flex-shrink-0 overflow-hidden">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-11 h-11 rounded-full gold-ring-solid p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 flex-shrink-0 overflow-hidden cursor-pointer group" onclick="window.openLogoLightbox()" title="Click to view table emblem">
           <img 
             id="tableLogoImg"
             src="logo.jpg" 
             alt="Table Logo" 
-            class="w-full h-full rounded-full object-cover object-center"
-            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-felt-900 rounded-full flex items-center justify-center text-gold-400 text-lg font-serif\'>♠</div>';"
+            class="w-full h-full rounded-full object-cover object-center group-hover:scale-105 transition-transform"
+            onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-zinc-950 rounded-full flex items-center justify-center text-gold-400 text-xl font-serif\'>♠</div>';"
           />
         </div>
         <div>
-          <h1 class="text-base sm:text-xl font-bold font-serif tracking-wider text-amber-100 flex items-center gap-2">
-            Poker OG's <span id="headerRoleBadge" class="text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-emerald-300 px-2 py-0.5 rounded-full">INITIALIZING</span>
-          </h1>
-          <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-black font-serif tracking-wider bg-gradient-to-r from-amber-100 via-gold-300 to-amber-200 bg-clip-text text-transparent">
+              Poker OG's
+            </h1>
+            <span id="headerRoleBadge" class="text-[10px] tracking-wider font-sans font-extrabold bg-zinc-800 border border-zinc-700 text-emerald-400 px-2 py-0.5 rounded-full uppercase">SYNCING</span>
+          </div>
+          <p class="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">
             <span id="syncStatusIndicator" class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
             <span id="syncStatusText">Connecting network...</span>
           </p>
@@ -99,178 +150,247 @@
       </div>
 
       <!-- Live Room Action & Code -->
-      <div class="flex items-center gap-2 bg-felt-900 border border-felt-700 p-1.5 rounded-xl shadow-inner">
-        <div class="px-2 py-1 text-xs">
-          <span class="text-gray-400 text-[10px] block uppercase font-bold">Room Code</span>
-          <span id="currentRoomCodeLabel" class="font-mono font-bold text-gold-400 text-sm sm:text-base tracking-widest cursor-pointer hover:underline" title="Click to copy link">TABLE1</span>
+      <div class="flex items-center gap-1.5 bg-zinc-900/90 border border-white/10 p-1.5 rounded-xl shadow-inner">
+        <div class="px-2.5 py-0.5 text-xs border-r border-white/10 cursor-pointer group" id="currentRoomCodeContainer" title="Click to copy invite link">
+          <span class="text-gray-500 text-[9px] block uppercase font-bold tracking-wider">Table Room</span>
+          <div class="flex items-center gap-1">
+            <span id="currentRoomCodeLabel" class="font-mono font-extrabold text-gold-400 text-xs sm:text-sm tracking-widest group-hover:text-gold-300 transition">TABLE1</span>
+            <svg class="w-3 h-3 text-gray-500 group-hover:text-gold-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          </div>
         </div>
-        <button id="openShareModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-emerald-300 flex items-center gap-1 transition" title="Show QR Code & Invite Link">
+        <button id="openShareModalBtn" class="px-2.5 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 rounded-lg text-xs font-semibold text-emerald-300 flex items-center gap-1.5 transition" title="Show QR Code & Invite Link">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-          <span class="hidden sm:inline">Invite</span>
+          <span class="hidden sm:inline">QR Invite</span>
         </button>
-        <button id="openRoomModalBtn" class="px-2.5 py-1.5 bg-felt-800 hover:bg-felt-700 border border-felt-600 rounded-lg text-xs font-semibold text-gray-300 transition" title="Switch or Create Room">
-          Join / Host
+        <button id="openRoomModalBtn" class="px-2.5 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 rounded-lg text-xs font-semibold text-gray-300 transition" title="Switch or Create Room">
+          Switch
         </button>
       </div>
 
       <!-- Navigation Tabs (Current Table vs Logbook vs Records) -->
-      <div class="flex items-center bg-felt-900 border border-felt-700 p-1 rounded-xl shadow-inner">
-        <button id="tabGameBtn" onclick="switchTab('game')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow">
+      <div class="flex items-center bg-zinc-900/90 border border-white/10 p-1 rounded-xl shadow-inner w-full sm:w-auto justify-between sm:justify-start">
+        <button id="tabGameBtn" onclick="switchTab('game')" class="flex-1 sm:flex-none justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 gold-shimmer text-amber-200 shadow-md">
           <span>♠️</span>
-          <span>Table</span>
+          <span>Live Table</span>
         </button>
-        <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
+        <button id="tabHistoryBtn" onclick="switchTab('history')" class="flex-1 sm:flex-none justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
           <span>📜</span>
           <span>Logbook</span>
-          <span id="historyNavBadge" class="ml-0.5 bg-felt-700 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">0</span>
+          <span id="historyNavBadge" class="ml-0.5 bg-zinc-800 border border-white/10 text-gold-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">0</span>
         </button>
-        <button id="tabRecordsBtn" onclick="switchTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
-          <span>🏆</span>
-          <span>Records</span>
+        <button id="tabRecordsBtn" onclick="switchTab('records')" class="flex-1 sm:flex-none justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200">
+          <span>🔄</span>
+          <span>Reset</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6 flex-grow">
+  <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-6 flex-grow">
 
     <!-- VIEW 1: ACTIVE CURRENT GAME -->
     <div id="viewCurrentGame" class="space-y-6">
 
       <!-- Balance & Integrity Banner (Buy-ins = Cashouts + Rake) -->
-      <div id="integrityBanner" class="p-4 sm:p-5 rounded-xl border transition-all duration-300 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div id="integrityBanner" class="p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- House Rake Configuration Bar -->
-      <div class="bg-felt-900/90 border border-gold-500/30 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg">
-            🏦
+      <!-- Current Session Live Stats + Dedicated Discrepancy & Rake Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <!-- Total Buy-ins -->
+        <div class="bg-[#14171c]/90 border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-3 -top-3 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">Total Buy-ins</span>
+            <span class="text-xs opacity-60">💵</span>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">House Rake</h3>
-              <span id="rakeStatusBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400">1€ / Person</span>
-            </div>
-            <p class="text-xs text-gray-400">Deducted from starting chip stack upfront (e.g. €20 buy-in &rarr; €19 chips). Verification: <span class="font-mono text-gray-300">Buyins = Cashouts + Rake</span>.</p>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono text-white my-1 tracking-tight" id="statTotalBuyin">€0.00</div>
+          <div class="flex items-center justify-between text-[11px] text-gray-400">
+            <span id="statPlayerCount">0 seated</span>
+            <span id="statTotalRebuysMini" class="text-amber-400 font-medium">0 rebuys</span>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <!-- Total Cash-outs & Progress Bar -->
+        <div class="bg-[#14171c]/90 border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-500/10 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-wider text-blue-400 font-bold">Total Cashed Out</span>
+            <span class="text-xs opacity-60">🧮</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono text-blue-200 my-1 tracking-tight" id="statTotalCashout">€0.00</div>
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px] text-gray-400">
+              <span id="statCashedCount">0 of 0 verified</span>
+              <span id="statCashedPercent" class="font-mono text-blue-300 font-bold">0%</span>
+            </div>
+            <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div id="statCashedProgressBar" class="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upfront House Rake -->
+        <div class="bg-[#14171c]/90 border border-gold-500/25 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -right-3 -top-3 w-16 h-16 bg-gold-500/10 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-wider text-gold-400 font-bold">House Rake</span>
+            <span class="text-xs">🏦</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono text-gold-400 my-1 tracking-tight" id="statTotalRake">€0.00</div>
+          <span class="text-[11px] text-gray-400 truncate" id="statRakeCollectorDesc">€1/player upfront</span>
+        </div>
+
+        <!-- Dedicated Discrepancy Sensor Card -->
+        <div id="discrepancyMetricCard" class="bg-[#14171c]/90 border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden transition-colors duration-300">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold" id="statDiscrepancyTitle">Table Discrepancy</span>
+            <span id="statDiscrepancyIcon" class="text-xs">⚖️</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono text-gray-200 my-1 tracking-tight" id="statDiscrepancyValue">€0.00</div>
+          <span class="text-[11px] text-gray-400 truncate" id="statDiscrepancySub">Waiting for final stacks</span>
+        </div>
+
+        <!-- Session MVP / Biggest Swing -->
+        <div class="bg-[#14171c]/90 border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col justify-between col-span-2 lg:col-span-1">
+          <div class="flex items-center justify-between text-[11px] uppercase tracking-wider font-bold">
+            <span class="text-emerald-400">Top Winner</span>
+            <span class="text-rose-400">Biggest Deficit</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 my-1 pt-1 border-t border-white/5">
+            <div>
+              <div class="text-sm font-bold text-white truncate" id="statTopWinner">-</div>
+              <div class="text-xs font-mono font-bold text-emerald-400" id="statTopWinnerAmt">+€0.00</div>
+            </div>
+            <div class="text-right border-l border-white/10 pl-2">
+              <div class="text-sm font-bold text-white truncate" id="statTopLoser">-</div>
+              <div class="text-xs font-mono font-bold text-rose-400" id="statTopLoserAmt">-€0.00</div>
+            </div>
+          </div>
+          <span class="text-[10px] text-gray-500">Live Net Standings</span>
+        </div>
+      </div>
+
+      <!-- House Rake & Table Rules Bar -->
+      <div class="bg-[#14171c]/90 border border-gold-500/25 rounded-2xl p-4 shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-gold-500/15 border border-gold-400/40 flex items-center justify-center text-gold-400 font-bold text-lg shadow-inner flex-shrink-0">
+            🏦
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm font-bold text-amber-100 uppercase tracking-wider">Upfront House Rake</h3>
+              <span id="rakeStatusBadge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-gold-500/40 text-gold-300 bg-gold-950/50">€1 / Player</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Deducted from starting chip stack upfront (e.g. €20 buy-in &rarr; €19.00 in table chips). Formula: <span class="font-mono text-amber-200/90">Buy-ins = Cashouts + Rake</span>.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-white/10 pt-3 lg:pt-0">
           <!-- Toggle Rake -->
-          <label class="flex items-center cursor-pointer select-none">
+          <label class="flex items-center cursor-pointer select-none bg-zinc-900/90 border border-white/10 px-3 py-1.5 rounded-xl">
             <input type="checkbox" id="rakeToggle" class="sr-only peer">
-            <div class="w-10 h-6 bg-felt-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500 relative border border-felt-600"></div>
-            <span class="ml-2 text-xs font-semibold text-gray-300">Enable Rake</span>
+            <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-500 relative"></div>
+            <span class="ml-2.5 text-xs font-semibold text-gray-200">Active</span>
           </label>
 
           <!-- Rake Per Person Input -->
-          <div id="rakeInputsContainer" class="flex items-center gap-2">
-            <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
-              <span class="text-gray-400 mr-1.5">Per Player:</span>
-              <span class="text-gold-400 font-semibold currencySymbol">€</span>
-              <input type="number" id="rakePerPersonInput" min="0" step="0.5" value="1" class="w-12 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
+          <div id="rakeInputsContainer" class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center bg-zinc-900 border border-white/15 rounded-xl px-3 py-1.5 text-xs">
+              <span class="text-gray-400 mr-1.5">Rake/Player:</span>
+              <span class="text-gold-400 font-bold currencySymbol">€</span>
+              <input type="number" id="rakePerPersonInput" min="0" step="0.5" value="1" class="w-12 bg-transparent text-white font-mono font-bold text-right focus:outline-none focus:border-b border-gold-400">
             </div>
 
             <!-- Collector Select -->
-            <div class="flex items-center bg-felt-800 border border-felt-600 rounded-lg px-2 py-1 text-xs">
-              <span class="text-gray-400 mr-1.5">Collector:</span>
-              <select id="rakeCollectorSelect" class="bg-felt-700 text-gold-300 font-semibold rounded px-1.5 py-0.5 focus:outline-none">
-                <option value="HOUSE">House Account</option>
+            <div class="flex items-center bg-zinc-900 border border-white/15 rounded-xl px-3 py-1.5 text-xs">
+              <span class="text-gray-400 mr-1.5">Banker:</span>
+              <select id="rakeCollectorSelect" class="bg-zinc-800 text-gold-300 font-semibold rounded-lg px-2 py-0.5 focus:outline-none border border-white/10">
+                <option value="HOUSE">🏦 House Account</option>
               </select>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Current Session Live Stats -->
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
-          <span class="text-xs uppercase tracking-wider text-emerald-400/80 font-semibold mb-1">Total Buy-ins</span>
-          <div class="text-xl sm:text-2xl font-bold text-amber-200" id="statTotalBuyin">€0</div>
-          <span class="text-[11px] text-gray-400 mt-1" id="statPlayerCount">0 players seated</span>
-        </div>
-
-        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
-          <span class="text-xs uppercase tracking-wider text-blue-400/80 font-semibold mb-1">Total Cash-outs</span>
-          <div class="text-xl sm:text-2xl font-bold text-blue-200" id="statTotalCashout">€0</div>
-          <span class="text-[11px] text-gray-400 mt-1" id="statCashedCount">0 stacks verified</span>
-        </div>
-
-        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
-          <span class="text-xs uppercase tracking-wider text-amber-400/80 font-semibold mb-1">House Rake</span>
-          <div class="text-xl sm:text-2xl font-bold text-gold-400" id="statTotalRake">€0</div>
-          <span class="text-[11px] text-gray-400 mt-1" id="statRakeCollectorDesc">Disabled</span>
-        </div>
-
-        <!-- Biggest Winner (Live Session) -->
-        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col">
-          <span class="text-xs uppercase tracking-wider text-gold-400 font-semibold mb-1">Biggest Winner</span>
-          <div class="text-xl sm:text-2xl font-bold text-emerald-400 truncate" id="statTopWinner">-</div>
-          <span class="text-[11px] text-gray-400 mt-1" id="statTopWinnerAmt">+€0</span>
-        </div>
-
-        <!-- Biggest Loser (Live Session) -->
-        <div class="bg-felt-900/90 border border-felt-700/80 p-4 rounded-xl shadow-lg flex flex-col col-span-2 lg:col-span-1">
-          <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold mb-1">Biggest Loser</span>
-          <div class="text-xl sm:text-2xl font-bold text-rose-400 truncate" id="statTopLoser">-</div>
-          <span class="text-[11px] text-gray-400 mt-1" id="statTopLoserAmt">-€0</span>
-        </div>
-      </div>
-
-      <!-- Players Roster Header -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-felt-800/70 p-4 rounded-xl border border-felt-700">
-        <div class="flex items-center space-x-2">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>Live Table Players</span>
-          </h2>
-          <span id="playerBadgeCount" class="bg-felt-600 text-xs text-amber-300 font-bold px-2 py-0.5 rounded-full border border-felt-500">0</span>
-          <span id="myClaimedBadge" class="hidden text-xs bg-emerald-950 text-emerald-300 border border-emerald-600 px-2 py-0.5 rounded-full"></span>
+      <!-- Players Roster Control Bar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#14171c]/90 p-4 rounded-2xl border border-white/10 shadow-lg">
+        <div class="flex items-center justify-between sm:justify-start space-x-2.5">
+          <div class="flex items-center space-x-2">
+            <span class="text-lg">🃏</span>
+            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">Seated Players</h2>
+            <span id="playerBadgeCount" class="bg-gold-500/20 text-xs text-gold-300 font-mono font-bold px-2.5 py-0.5 rounded-full border border-gold-500/30">0</span>
+          </div>
+          <span id="myClaimedBadge" class="hidden text-xs bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 px-2.5 py-0.5 rounded-full font-semibold"></span>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center bg-felt-900/90 border border-felt-600 rounded-lg px-2.5 py-1 text-xs">
+          <div class="flex items-center bg-zinc-900 border border-white/15 rounded-xl px-3 py-1.5 text-xs">
             <span class="text-gray-400 mr-2">Default Buy-in:</span>
-            <span class="text-gold-400 font-semibold currencySymbol">€</span>
-            <input type="number" id="defaultBuyinInput" min="1" value="20" class="w-16 bg-transparent text-white font-bold text-right focus:outline-none focus:border-b border-gold-400">
+            <span class="text-gold-400 font-bold currencySymbol">€</span>
+            <input type="number" id="defaultBuyinInput" min="1" value="20" class="w-12 bg-transparent text-white font-mono font-bold text-right focus:outline-none focus:border-b border-gold-400">
           </div>
 
-          <button id="addPlayerBtn" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white font-semibold rounded-lg text-sm shadow-md transition flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Add Player
+          <button id="seatRegularsBtn" onclick="window.seatRegulars()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-gold-300 hover:text-gold-200 font-semibold rounded-xl text-xs border border-gold-500/30 transition flex items-center gap-1" title="Ensure Maarten, Lucas, Matthieu, JJ & Nick are seated">
+            <span>👥</span>
+            <span class="hidden md:inline">Seat OG Regulars</span>
+          </button>
+
+          <button id="addPlayerBtn" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-950/50 transition flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            <span>Add Player</span>
           </button>
         </div>
       </div>
 
       <!-- Player cards grid container -->
-      <div id="playersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div id="playersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- Greedy Debt Settlement & Export Section -->
-      <section class="bg-[#181a1f] border border-zinc-700/80 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-zinc-700/80">
+      <!-- Debt Settlement & Export Section -->
+      <section class="bg-[#14171c]/95 border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-white/10">
           <div>
-            <h2 class="text-xl font-bold font-serif text-amber-200 flex items-center gap-2">
-              <span>🎲 Who Pays Whom</span>
-              <span id="settlementModeBadge" class="text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full">
-                Optimal Settlement
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-xl font-bold font-serif text-amber-200 flex items-center gap-2">
+                <span>🎲 Who Pays Whom</span>
+              </h2>
+              <span id="settlementModeBadge" class="text-xs font-sans font-semibold text-gold-300 bg-gold-950/80 border border-gold-600/60 px-2.5 py-0.5 rounded-full">
+                Central House Bank
               </span>
-            </h2>
-            <p id="settlementModeDesc" class="text-xs text-gray-400 mt-0.5">Greedy algorithm minimizes transfers so losers pay winners directly.</p>
+            </div>
+            <p id="settlementModeDesc" class="text-xs text-gray-400 mt-1">All players pay their net losses into the House Account, and the House Account pays out all winners.</p>
           </div>
 
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button id="copySummaryBtn" class="w-full sm:w-auto px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 border border-zinc-600 transition shadow">
-              <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-              <span id="copySummaryText">Copy for Chat</span>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+            <!-- Settlement Mode Toggle Pill -->
+            <div class="flex items-center bg-zinc-900 border border-white/10 p-1 rounded-xl shadow-inner">
+              <button type="button" id="modeHouseBtn" onclick="window.setSettlementMode('HOUSE')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 gold-shimmer text-amber-200 shadow">
+                <span>🏦</span>
+                <span>Central Bank</span>
+              </button>
+              <button type="button" id="modeP2PBtn" onclick="window.setSettlementMode('P2P')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-gray-400 hover:text-amber-200">
+                <span>🤝</span>
+                <span>Peer-to-Peer</span>
+              </button>
+            </div>
+
+            <button id="copySummaryBtn" class="px-4 py-2.5 gold-shimmer text-amber-200 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              <span id="copySummaryText">Copy Summary for WhatsApp</span>
             </button>
           </div>
         </div>
 
+        <!-- Explicit Settlement Balance Status Callout -->
+        <div id="settlementBalanceBanner" class="mt-4">
+          <!-- Rendered dynamically -->
+        </div>
+
         <!-- Settlement Transactions Display -->
-        <div id="settlementList" class="mt-5 space-y-2.5">
+        <div id="settlementList" class="mt-4 space-y-2.5">
           <!-- Rendered dynamically -->
         </div>
       </section>
@@ -279,27 +399,27 @@
 
     <!-- VIEW 2: REAL-TIME BUY-IN & REBUY LOGBOOK TAB -->
     <div id="viewHistory" class="hidden space-y-6">
-      <div class="bg-[#181a1f] border border-zinc-700/80 rounded-2xl p-5 sm:p-7 shadow-2xl relative">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-zinc-700/80 gap-3">
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
+      <div class="bg-[#14171c]/95 border border-white/10 rounded-2xl p-5 sm:p-7 shadow-2xl relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-white/10 gap-3">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl shadow-inner">
               📜
             </div>
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">BUY-IN &amp; REBUY LOGBOOK</h2>
-                <span id="historyLogCountBadge" class="text-xs bg-gold-500/20 text-gold-300 border border-gold-500/40 px-2 py-0.5 rounded-full font-bold">0 events</span>
+                <span id="historyLogCountBadge" class="text-xs bg-gold-500/20 text-gold-300 border border-gold-500/40 px-2.5 py-0.5 rounded-full font-mono font-bold">0 events</span>
               </div>
-              <p class="text-xs text-gray-400">Live chronological timeline of all buy-ins and rebuys with dates and exact timestamps</p>
+              <p class="text-xs text-gray-400 mt-0.5">Live chronological timeline of all buy-ins and rebuys with dates and exact timestamps</p>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
-            <button onclick="window.copyHistoryLog()" class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold border border-zinc-600 transition flex items-center gap-1.5 shadow">
+            <button onclick="window.copyHistoryLog()" class="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold border border-white/10 transition flex items-center gap-1.5 shadow">
               <svg class="w-3.5 h-3.5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
               <span>Copy Logbook</span>
             </button>
-            <button onclick="window.clearHistoryLog()" class="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-lg text-xs font-semibold border border-red-800/80 transition flex items-center gap-1">
+            <button onclick="window.clearHistoryLog()" class="px-3.5 py-2 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-xl text-xs font-semibold border border-rose-800/80 transition flex items-center gap-1">
               <span>Clear</span>
             </button>
           </div>
@@ -307,22 +427,22 @@
 
         <!-- Logbook Overview Statistics -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+          <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl">
             <span class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold block mb-0.5">Total Rebuys</span>
             <div id="statHistRebuysCount" class="text-xl font-bold font-mono text-amber-200">0</div>
             <span class="text-[10px] text-gray-500">Excluding initial seats</span>
           </div>
-          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+          <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl">
             <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold block mb-0.5">Rebuy Volume</span>
             <div id="statHistRebuysVolume" class="text-xl font-bold font-mono text-emerald-400">€0.00</div>
             <span class="text-[10px] text-gray-500">Added mid-game</span>
           </div>
-          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+          <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl">
             <span class="text-[11px] uppercase tracking-wider text-gold-400 font-semibold block mb-0.5">Most Rebuys</span>
             <div id="statHistTopRebuyer" class="text-xl font-bold text-gold-300 truncate">-</div>
             <span id="statHistTopRebuyerSub" class="text-[10px] text-gray-500">0 rebuys</span>
           </div>
-          <div class="bg-zinc-900/80 border border-zinc-800 p-3.5 rounded-xl">
+          <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl">
             <span class="text-[11px] uppercase tracking-wider text-blue-400 font-semibold block mb-0.5">Latest Action</span>
             <div id="statHistLatestTime" class="text-xl font-bold font-mono text-blue-300 truncate">-</div>
             <span id="statHistLatestDesc" class="text-[10px] text-gray-500">No events logged</span>
@@ -336,33 +456,47 @@
       </div>
     </div>
 
-    <!-- VIEW 3: DEDICATED ANONYMOUS ALL-TIME RECORDS TAB -->
+    <!-- VIEW 3: DEDICATED ROOM RESET & ALL-TIME RECORDS TAB -->
     <div id="viewAllTimeRecords" class="hidden space-y-6">
-      <div class="bg-gradient-to-r from-felt-950 via-felt-900 to-felt-950 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-gold-500/20 gap-3">
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
-              🏆
+      <div class="bg-[#14171c]/95 border border-gold-500/35 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-white/10 gap-3">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-2xl">
+              🔄
             </div>
             <div>
-              <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">ALL-TIME RECORDS</h2>
-              <p class="text-xs text-gray-400">Anonymous home game benchmarks across all recorded sessions</p>
+              <h2 class="text-xl sm:text-2xl font-bold font-serif text-amber-200 tracking-wide">RESET FOR NEXT GAME</h2>
+              <p class="text-xs text-gray-400">Finalize tonight's session, lock in all-time records &amp; prepare the room for the next poker night</p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span id="allTimeGamesBadge" class="text-xs bg-gold-500/10 text-gold-300 border border-gold-500/30 px-3 py-1 rounded-full font-semibold">0 Sessions Logged</span>
-            <button onclick="archiveCurrentSession()" class="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-600/70 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-              Settle & Archive Game
-            </button>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span id="allTimeGamesBadge" class="text-xs bg-gold-500/10 text-gold-300 border border-gold-500/30 px-3 py-1.5 rounded-full font-mono font-bold">0 Sessions Completed</span>
           </div>
+        </div>
+
+        <!-- Primary Reset Room Call-to-Action Card -->
+        <div class="bg-gradient-to-r from-emerald-950/70 via-[#0a2316] to-emerald-950/60 border border-emerald-500/50 rounded-2xl p-5 sm:p-6 mb-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">New Session Prep</span>
+              <span class="text-xs text-gray-300 font-mono">Ready for Game Night <strong id="nextSessionNumber" class="text-amber-300">#4</strong></span>
+            </div>
+            <h3 class="text-lg font-bold text-white pt-1">Start a Fresh Table for the Next Game</h3>
+            <p class="text-xs text-gray-300 max-w-2xl leading-relaxed">
+              This will automatically save any new all-time high records from tonight, clear all end-of-night chip stacks, wipe the current buy-in logbook, and reset seated players back to a single starting buy-in.
+            </p>
+          </div>
+          <button onclick="archiveCurrentSession()" class="w-full md:w-auto flex-shrink-0 px-5 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/60">
+            <span>🔄</span>
+            <span>Reset &amp; Start Next Game</span>
+          </button>
         </div>
 
         <!-- 2 Primary Anonymous Records: Biggest Buy-in & Biggest Loss -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           
           <!-- Anonymous Biggest Buy-in Ever Card -->
-          <div class="bg-felt-900/90 border border-gold-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div class="bg-zinc-900/90 border border-gold-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center space-x-3">
                 <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 text-2xl">
@@ -376,17 +510,17 @@
             </div>
             
             <div class="py-2">
-              <div id="hofBiggestBuyinAmt" class="text-3xl sm:text-4xl font-mono font-bold text-gold-400 tracking-tight">€0.00</div>
+              <div id="hofBiggestBuyinAmt" class="text-3xl sm:text-4xl font-mono font-extrabold text-gold-400 tracking-tight">€0.00</div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-felt-800 flex items-center justify-between text-xs text-gray-400">
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
               <span>Record Log:</span>
               <span id="hofBiggestBuyinDate" class="font-medium text-gray-300">-</span>
             </div>
           </div>
 
           <!-- Anonymous Biggest Loss Ever Card -->
-          <div class="bg-felt-900/90 border border-rose-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div class="bg-zinc-900/90 border border-rose-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center space-x-3">
                 <div class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-300 text-2xl">
@@ -400,10 +534,10 @@
             </div>
             
             <div class="py-2">
-              <div id="hofBiggestLossAmt" class="text-3xl sm:text-4xl font-mono font-bold text-rose-400 tracking-tight">-€0.00</div>
+              <div id="hofBiggestLossAmt" class="text-3xl sm:text-4xl font-mono font-extrabold text-rose-400 tracking-tight">-€0.00</div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-felt-800 flex items-center justify-between text-xs text-gray-400">
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
               <span>Record Log:</span>
               <span id="hofBiggestLossDate" class="font-medium text-gray-300">-</span>
             </div>
@@ -412,30 +546,30 @@
         </div>
 
         <!-- Manual Adjustments Section -->
-        <div class="bg-felt-950/60 border border-felt-800 rounded-xl p-5">
+        <div class="bg-zinc-950/80 border border-white/10 rounded-xl p-5">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-bold text-amber-200 uppercase tracking-wide">Manual Record Calibration</h3>
             <span class="text-xs text-gray-400">Synchronized across connected devices</span>
           </div>
 
           <form id="hofForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
+            <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl space-y-2">
               <label class="text-xs text-amber-300 font-bold block">Biggest Buy-in Amount (<span class="currencySymbol">€</span>)</label>
-              <input type="number" step="any" min="0" id="hofInputBuyinAmt" class="w-full bg-felt-800 border border-felt-600 rounded px-3 py-2 text-sm text-gold-400 font-bold font-mono">
-              <input type="text" id="hofInputBuyinDate" placeholder="Date / Note (e.g. Session #5)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
+              <input type="number" step="any" min="0" id="hofInputBuyinAmt" class="w-full bg-zinc-800 border border-white/15 rounded-lg px-3 py-2 text-sm text-gold-400 font-bold font-mono focus:outline-none focus:ring-1 focus:ring-gold-400">
+              <input type="text" id="hofInputBuyinDate" placeholder="Date / Note (e.g. Session #5)" class="w-full bg-zinc-800 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none">
             </div>
 
-            <div class="bg-felt-900/80 border border-felt-700 p-3.5 rounded-lg space-y-2">
+            <div class="bg-zinc-900/90 border border-white/10 p-3.5 rounded-xl space-y-2">
               <label class="text-xs text-rose-300 font-bold block">Biggest Loss Amount (<span class="currencySymbol">€</span>)</label>
-              <input type="number" step="any" min="0" id="hofInputLossAmt" class="w-full bg-felt-800 border border-felt-600 rounded px-3 py-2 text-sm text-rose-400 font-bold font-mono">
-              <input type="text" id="hofInputLossDate" placeholder="Date / Note (e.g. Session #4)" class="w-full bg-felt-800 border border-felt-600 rounded px-2.5 py-1 text-xs text-gray-300">
+              <input type="number" step="any" min="0" id="hofInputLossAmt" class="w-full bg-zinc-800 border border-white/15 rounded-lg px-3 py-2 text-sm text-rose-400 font-bold font-mono focus:outline-none focus:ring-1 focus:ring-rose-400">
+              <input type="text" id="hofInputLossDate" placeholder="Date / Note (e.g. Session #4)" class="w-full bg-zinc-800 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none">
             </div>
 
             <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-2">
-              <button type="button" onclick="resetAllTimeRecords()" class="px-3 py-2 bg-red-950/70 hover:bg-red-900 text-red-300 rounded-lg text-xs font-semibold border border-red-800/80 transition">
+              <button type="button" onclick="resetAllTimeRecords()" class="px-3.5 py-2 bg-rose-950/70 hover:bg-rose-900 text-rose-300 rounded-xl text-xs font-semibold border border-rose-800/80 transition">
                 Reset Records to Zero
               </button>
-              <button type="submit" class="px-5 py-2 bg-gold-600 hover:bg-gold-500 text-black rounded-lg text-xs font-bold transition shadow">
+              <button type="submit" class="px-5 py-2 gold-shimmer text-amber-200 rounded-xl text-xs font-bold transition shadow-lg">
                 Save Records
               </button>
             </div>
@@ -448,17 +582,17 @@
   </main>
 
   <!-- Footer with Connection indicator -->
-  <footer class="border-t border-felt-800/80 bg-black/60 text-center py-3 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-center gap-2">
-    <span>Poker Night Live Ledger</span>
+  <footer class="border-t border-white/10 bg-black/70 text-center py-3.5 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-center gap-2">
+    <span class="text-gray-400 font-medium">Poker OG's Live Ledger</span>
     <span class="hidden sm:inline">&bull;</span>
     <span id="footerSyncModeText">HTTP Live Sync &amp; Local Mesh</span>
     <span class="hidden sm:inline">&bull;</span>
-    <span id="footerPeerCount">Room: TABLE1</span>
+    <span id="footerPeerCount" class="font-mono text-gold-400/90">Room: TABLE1</span>
   </footer>
 
   <!-- Modal: Add or Edit Player -->
-  <div id="playerModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-felt-900 border border-felt-600 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+  <div id="playerModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('playerModal')">
+    <div class="bg-[#14171c] border border-white/15 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
       <button onclick="closeModal('playerModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       <h3 id="modalTitle" class="text-xl font-bold font-serif text-amber-200 mb-4">Add New Player</h3>
 
@@ -467,11 +601,22 @@
         
         <div>
           <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Player Name</label>
-          <input type="text" id="modalPlayerName" required placeholder="e.g. Mike" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <input type="text" id="modalPlayerName" required placeholder="e.g. Jef or Krikke" class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <div class="flex items-center gap-1.5 flex-wrap mt-2">
+            <span class="text-[10px] text-gray-500 uppercase font-bold">Quick Pick:</span>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Maarten'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Maarten</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Lucas'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Lucas</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Matthieu'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Matthieu</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='JJ'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">JJ</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Nick'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Nick</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Jef'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Jef</button>
+            <button type="button" onclick="document.getElementById('modalPlayerName').value='Krikke'" class="text-[11px] px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded border border-white/10">Krikke</button>
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1.5">Automatically loads <span class="font-mono text-gray-400">{Name}.JPEG</span> if present in repository.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Avatar Color Theme</label>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Avatar Accent Theme</label>
           <div class="flex items-center gap-3" id="colorPickerGroup">
             <!-- Colors radio buttons generated via script -->
           </div>
@@ -479,20 +624,66 @@
 
         <div id="modalBuyinGroup">
           <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Initial Buy-in (<span class="currencySymbol">€</span>)</label>
-          <input type="number" id="modalInitialBuyin" min="0" step="any" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <button type="button" onclick="document.getElementById('modalInitialBuyin').value = 10" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gray-200 rounded-lg text-xs font-mono font-bold border border-white/10">€10</button>
+            <button type="button" onclick="document.getElementById('modalInitialBuyin').value = 20" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gold-300 rounded-lg text-xs font-mono font-bold border border-gold-500/30">€20 (Standard)</button>
+          </div>
+          <input type="number" id="modalInitialBuyin" min="0" step="any" class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
         </div>
 
-        <div class="pt-3 flex gap-2">
-          <button type="button" onclick="closeModal('playerModal')" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-sm font-semibold transition border border-felt-600">Cancel</button>
-          <button type="submit" id="savePlayerSubmitBtn" class="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white rounded-lg text-sm font-semibold transition shadow">Save Player</button>
+        <div class="pt-3 flex gap-2.5">
+          <button type="button" onclick="closeModal('playerModal')" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-sm font-semibold transition border border-white/10">Cancel</button>
+          <button type="submit" id="savePlayerSubmitBtn" class="w-1/2 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white rounded-xl text-sm font-bold transition shadow-lg">Save Player</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Modal: Custom Rebuy Amount -->
+  <div id="customBuyinModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('customBuyinModal')">
+    <div class="bg-[#14171c] border border-gold-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+      <button onclick="closeModal('customBuyinModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+      <h3 class="text-lg font-bold font-serif text-amber-200 mb-1">Custom Rebuy</h3>
+      <p class="text-xs text-gray-400 mb-4">Adding buy-in for <span id="customBuyinPlayerName" class="text-gold-300 font-bold">Player</span></p>
+
+      <form id="customBuyinForm" class="space-y-4">
+        <input type="hidden" id="customBuyinPlayerId">
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" onclick="document.getElementById('customBuyinAmountInput').value = 5" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gray-200 rounded-lg text-xs font-mono font-bold border border-white/10">+€5</button>
+          <button type="button" onclick="document.getElementById('customBuyinAmountInput').value = 10" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gold-300 rounded-lg text-xs font-mono font-bold border border-gold-500/30">+€10</button>
+          <button type="button" onclick="document.getElementById('customBuyinAmountInput').value = 20" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gold-300 rounded-lg text-xs font-mono font-bold border border-gold-500/30">+€20</button>
+          <button type="button" onclick="document.getElementById('customBuyinAmountInput').value = 50" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-gray-200 rounded-lg text-xs font-mono font-bold border border-white/10">+€50</button>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Amount (<span class="currencySymbol">€</span>)</label>
+          <input type="number" id="customBuyinAmountInput" min="0.5" step="any" required class="w-full bg-zinc-900 border border-white/20 rounded-xl px-3.5 py-2.5 text-white font-mono text-base font-bold focus:outline-none focus:ring-2 focus:ring-gold-400">
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeModal('customBuyinModal')" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-xs font-semibold border border-white/10">Cancel</button>
+          <button type="submit" class="w-1/2 py-2.5 gold-shimmer text-amber-200 rounded-xl text-xs font-bold shadow-lg">Add Rebuy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Confirmation Dialog -->
+  <div id="confirmDialogModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('confirmDialogModal')">
+    <div class="bg-[#14171c] border border-white/15 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+      <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl mx-auto mb-3" id="confirmDialogIcon">
+        ⚠️
+      </div>
+      <h3 id="confirmDialogTitle" class="text-lg font-bold font-serif text-amber-200 mb-1.5">Confirm Action</h3>
+      <p id="confirmDialogMessage" class="text-xs text-gray-300 leading-relaxed mb-5">Are you sure you want to proceed?</p>
+      <div class="flex gap-2.5">
+        <button type="button" onclick="closeModal('confirmDialogModal')" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-xs font-semibold border border-white/10 transition">Cancel</button>
+        <button type="button" id="confirmDialogAcceptBtn" class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-lg transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Share Table / QR Code -->
-  <div id="shareModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+  <div id="shareModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('shareModal')">
+    <div class="bg-[#14171c] border border-gold-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
       <button onclick="closeModal('shareModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       
       <div class="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-gold-400 text-2xl mx-auto mb-3">
@@ -502,14 +693,14 @@
       <p class="text-xs text-gray-400 mt-1 mb-4">Scan this QR code with any phone camera to join this live table!</p>
 
       <!-- QR Code Holder -->
-      <div class="bg-white p-3 rounded-xl inline-block shadow-lg mx-auto mb-4" id="qrcodeCanvas"></div>
+      <div class="bg-white p-3.5 rounded-2xl inline-block shadow-xl mx-auto mb-4" id="qrcodeCanvas"></div>
 
-      <div class="bg-felt-950 p-2.5 rounded-lg border border-felt-700 flex items-center justify-between text-xs mb-4">
+      <div class="bg-zinc-900 p-3 rounded-xl border border-white/10 flex items-center justify-between text-xs mb-4">
         <span class="text-gray-400 font-semibold">Room Code:</span>
         <span id="shareModalRoomCode" class="font-mono font-bold text-gold-400 text-base tracking-wider">TABLE1</span>
       </div>
 
-      <button id="copyShareLinkBtn" onclick="copyShareableLink()" class="w-full py-2.5 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded-lg text-xs transition shadow flex items-center justify-center gap-1.5">
+      <button id="copyShareLinkBtn" onclick="copyShareableLink()" class="w-full py-2.5 gold-shimmer text-amber-200 font-bold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
         <span id="copyShareBtnText">Copy Shareable Link</span>
       </button>
@@ -517,8 +708,8 @@
   </div>
 
   <!-- Modal: Switch or Host Room -->
-  <div id="roomModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-felt-900 border border-felt-600 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+  <div id="roomModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('roomModal')">
+    <div class="bg-[#14171c] border border-white/15 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
       <button onclick="closeModal('roomModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       <h3 class="text-lg font-bold font-serif text-amber-200 mb-2">Join or Host Table</h3>
       <p class="text-xs text-gray-400 mb-4">Enter a 4-8 letter room name to connect phones in real time with zero setup.</p>
@@ -526,52 +717,55 @@
       <form id="roomForm" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room Code</label>
-          <input type="text" id="inputRoomCode" required placeholder="e.g. TABLE1" class="w-full bg-felt-800 border border-felt-600 rounded-lg px-3 py-2 text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
+          <input type="text" id="inputRoomCode" required placeholder="e.g. TABLE1" class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold-400 text-sm">
         </div>
 
         <div class="flex gap-2">
-          <button type="button" onclick="generateRandomRoomCode()" class="w-1/2 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold transition border border-felt-600">New Code</button>
-          <button type="submit" class="w-1/2 py-2 bg-gradient-to-r from-gold-600 to-amber-500 hover:from-gold-500 text-black rounded-lg text-xs font-bold transition shadow">Enter Room</button>
+          <button type="button" onclick="generateRandomRoomCode()" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-xs font-semibold transition border border-white/10">Random Code</button>
+          <button type="submit" class="w-1/2 py-2.5 gold-shimmer text-amber-200 rounded-xl text-xs font-bold transition shadow-lg">Enter Room</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal: Quick Chip Counter -->
-  <div id="chipModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+  <div id="chipModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) closeModal('chipModal')">
+    <div class="bg-[#14171c] border border-gold-500/40 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
       <button onclick="closeModal('chipModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       
       <div class="flex items-center space-x-3 mb-1">
-        <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-400/40 flex items-center justify-center text-lg">
+        <div class="w-10 h-10 rounded-xl bg-gold-500/15 border border-gold-400/40 flex items-center justify-center text-xl">
           🧮
         </div>
         <div>
-          <h3 class="text-lg font-bold font-serif text-amber-200">Chip Counter</h3>
+          <h3 class="text-lg font-bold font-serif text-amber-200">Physical Chip Counter</h3>
           <p class="text-xs text-gray-400">Counting stack for <span id="chipModalPlayerName" class="text-gold-300 font-bold">Player</span></p>
         </div>
       </div>
 
       <!-- Denomination rows container -->
-      <div id="chipRowsContainer" class="mt-4 space-y-2.5 max-h-[58vh] overflow-y-auto pr-1">
+      <div id="chipRowsContainer" class="mt-4 space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
         <!-- Rows dynamically generated -->
       </div>
 
       <!-- Total Chip Value & Actions -->
-      <div class="mt-4 pt-3.5 border-t border-felt-700 flex flex-col gap-3">
-        <div class="flex items-center justify-between bg-felt-950 p-3 rounded-xl border border-felt-700">
-          <span class="text-xs text-gray-300 font-semibold uppercase tracking-wider">Total Counted:</span>
-          <span id="chipModalTotalDisplay" class="font-mono font-bold text-emerald-400 text-xl tracking-tight">€0.00</span>
+      <div class="mt-4 pt-3.5 border-t border-white/10 flex flex-col gap-3">
+        <div class="flex items-center justify-between bg-zinc-950 p-3.5 rounded-xl border border-white/10">
+          <div>
+            <span class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider block">Counted Stack Value</span>
+            <span id="chipModalCountSummary" class="text-[11px] text-gray-500">0 physical chips</span>
+          </div>
+          <span id="chipModalTotalDisplay" class="font-mono font-extrabold text-emerald-400 text-2xl tracking-tight">€0.00</span>
         </div>
 
         <div class="flex items-center gap-2">
-          <button type="button" onclick="window.resetChipCounts()" class="px-3 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
-            Reset
+          <button type="button" onclick="window.resetChipCounts()" class="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-xs font-semibold border border-white/10 transition">
+            Zero All
           </button>
-          <button type="button" onclick="closeModal('chipModal')" class="w-1/3 py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
+          <button type="button" onclick="closeModal('chipModal')" class="w-1/4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl text-xs font-semibold border border-white/10 transition">
             Cancel
           </button>
-          <button type="button" onclick="window.applyChipCountsToCashout()" class="flex-1 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white font-bold rounded-lg text-xs shadow-lg transition flex items-center justify-center gap-1">
+          <button type="button" onclick="window.applyChipCountsToCashout()" class="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-1.5">
             <span>Apply to Stack</span>
             <span>✓</span>
           </button>
@@ -581,28 +775,28 @@
   </div>
 
   <!-- Modal: Large Photo Lightbox -->
-  <div id="photoModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) window.closeModal('photoModal')">
-    <div class="bg-felt-900 border border-gold-500/50 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+  <div id="photoModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="if(event.target === this) window.closeModal('photoModal')">
+    <div class="bg-[#14171c] border border-gold-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative text-center">
       <button type="button" onclick="window.closeModal('photoModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
       
       <h3 id="photoModalName" class="text-xl font-bold font-serif text-amber-200 mb-4">Player Photo</h3>
 
-      <div class="w-56 h-56 sm:w-64 sm:h-64 mx-auto rounded-2xl overflow-hidden border-2 border-gold-400/60 shadow-xl bg-black/50 flex items-center justify-center relative">
+      <div class="w-64 h-64 sm:w-72 sm:h-72 mx-auto rounded-2xl overflow-hidden border-2 border-gold-400/60 shadow-2xl bg-zinc-950 flex items-center justify-center relative">
         <img id="photoModalImg" src="" alt="Player Photo" class="w-full h-full object-cover object-center" />
-        <div id="photoModalFallback" class="w-full h-full hidden items-center justify-center text-white text-6xl font-bold font-serif"></div>
+        <div id="photoModalFallback" class="w-full h-full hidden items-center justify-center text-white text-7xl font-bold font-serif"></div>
       </div>
 
       <div class="mt-5">
-        <button type="button" onclick="window.closeModal('photoModal')" class="w-full py-2 bg-felt-800 hover:bg-felt-700 text-gray-300 rounded-lg text-xs font-semibold border border-felt-600 transition">
-          Close
+        <button type="button" onclick="window.closeModal('photoModal')" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-200 rounded-xl text-xs font-semibold border border-white/10 transition">
+          Close Preview
         </button>
       </div>
     </div>
   </div>
 
   <!-- Toast Notification element -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-felt-800 border border-gold-400/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 pointer-events-none">
-    <span id="toastIcon">✨</span>
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-zinc-900 border border-gold-400/50 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2.5 pointer-events-none">
+    <span id="toastIcon" class="text-base">✨</span>
     <span id="toastMsg">Notification</span>
   </div>
 
@@ -611,21 +805,30 @@
       { name: 'Emerald', bg: 'bg-emerald-600', hex: '#059669' },
       { name: 'Ruby', bg: 'bg-rose-600', hex: '#e11d48' },
       { name: 'Sapphire', bg: 'bg-blue-600', hex: '#2563eb' },
-      { name: 'Amber', bg: 'bg-amber-600', hex: '#d97706' },
       { name: 'Purple', bg: 'bg-purple-600', hex: '#9333ea' },
+      { name: 'Amber', bg: 'bg-amber-600', hex: '#d97706' },
       { name: 'Slate', bg: 'bg-gray-600', hex: '#4b5563' }
     ];
 
+    const REGULAR_PLAYERS = [
+      { id: '1', name: 'Maarten', color: COLOR_PRESETS[0].hex },
+      { id: '2', name: 'Lucas', color: COLOR_PRESETS[1].hex },
+      { id: '3', name: 'Matthieu', color: COLOR_PRESETS[2].hex },
+      { id: '4', name: 'JJ', color: COLOR_PRESETS[3].hex },
+      { id: '5', name: 'Nick', color: COLOR_PRESETS[4].hex }
+    ];
+
     const CHIP_DENOMINATIONS = [
-      { id: 'brown', name: 'Brown', val: 0.10, chipBg: 'bg-amber-900 border-amber-700 text-amber-200' },
-      { id: 'blue', name: 'Blue', val: 1.00, chipBg: 'bg-blue-600 border-blue-400 text-white' },
-      { id: 'green', name: 'Green', val: 2.00, chipBg: 'bg-emerald-600 border-emerald-400 text-white' },
-      { id: 'yellow', name: 'Yellow', val: 10.00, chipBg: 'bg-yellow-500 border-yellow-300 text-black' },
-      { id: 'black', name: 'Black', val: 100.00, chipBg: 'bg-zinc-900 border-zinc-500 text-white ring-1 ring-white/30' }
+      { id: 'brown', name: 'Brown', val: 0.10, fill: '#78350f', stroke: '#fcd34d', text: '#fef3c7' },
+      { id: 'blue', name: 'Blue', val: 1.00, fill: '#1d4ed8', stroke: '#93c5fd', text: '#ffffff' },
+      { id: 'green', name: 'Green', val: 2.00, fill: '#047857', stroke: '#6ee7b7', text: '#ffffff' },
+      { id: 'yellow', name: 'Yellow', val: 10.00, fill: '#eab308', stroke: '#fef08a', text: '#090b0e' },
+      { id: 'black', name: 'Black', val: 100.00, fill: '#18181b', stroke: '#f5c35f', text: '#fde047' }
     ];
 
     let currentCountingPlayerId = null;
     let activeChipCounts = { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 };
+    let pendingConfirmCallback = null;
 
     // Read room code from URL query ?room=XYZ or default to TABLE1
     const urlParams = new URLSearchParams(window.location.search);
@@ -639,9 +842,8 @@
     let localChannel = null;
     let eventSource = null;
     let pollInterval = null;
-    let isBroadcasting = false;
 
-    // Application state
+    // Application state with the 5 regular players: Maarten, Lucas, Matthieu, JJ, and Nick
     window.tableState = {
       room: activeRoomCode,
       currency: '€',
@@ -649,15 +851,14 @@
       rakeEnabled: true,
       rakePerPerson: 1,
       rakeCollector: 'HOUSE',
-      players: [
-        { id: '1', name: 'Maarten', color: COLOR_PRESETS[0].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '2', name: 'Lucas', color: COLOR_PRESETS[1].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '3', name: 'Matthieu', color: COLOR_PRESETS[2].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '4', name: 'Nick', color: COLOR_PRESETS[3].hex, buyins: [20], cashout: 0, hasCashedOut: false },
-        { id: '5', name: 'JJ', color: COLOR_PRESETS[4].hex, buyins: [20], cashout: 0, hasCashedOut: false }
-      ],
+      settlementMode: 'HOUSE',
+      players: REGULAR_PLAYERS.map(p => ({
+        ...p,
+        buyins: [20],
+        cashout: 0,
+        hasCashedOut: false
+      })),
       buyinHistory: [],
-      // Anonymous historical records
       allTimeRecords: {
         biggestBuyin: { amount: 60, date: 'Oct 2026' },
         biggestLoss: { amount: 41, date: 'Sep 2026' },
@@ -665,6 +866,182 @@
       },
       version: 1,
       lastUpdated: Date.now()
+    };
+
+    function askConfirmation({ title, message, icon = '⚠️', confirmText = 'Confirm', confirmStyle = 'rose', onConfirm }) {
+      document.getElementById('confirmDialogTitle').innerText = title || 'Confirm Action';
+      document.getElementById('confirmDialogMessage').innerText = message || 'Are you sure?';
+      document.getElementById('confirmDialogIcon').innerText = icon;
+      const btn = document.getElementById('confirmDialogAcceptBtn');
+      btn.innerText = confirmText;
+      btn.className = confirmStyle === 'emerald'
+        ? 'w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg transition'
+        : 'w-1/2 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-lg transition';
+      
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('confirmDialogModal').classList.remove('hidden');
+    }
+
+    function createCasinoChipSvg(denom) {
+      const label = denom.val < 1 ? `${Math.round(denom.val * 100)}c` : `${window.tableState.currency}${denom.val}`;
+      return `
+        <svg viewBox="0 0 44 44" class="w-10 h-10 flex-shrink-0 drop-shadow">
+          <circle cx="22" cy="22" r="20" fill="${denom.fill}" stroke="${denom.stroke}" stroke-width="2.5" stroke-dasharray="5 3.5" />
+          <circle cx="22" cy="22" r="14.5" fill="${denom.fill}" stroke="${denom.stroke}" stroke-width="1" opacity="0.85" />
+          <text x="22" y="25.5" text-anchor="middle" fill="${denom.text}" font-family="JetBrains Mono, monospace" font-weight="800" font-size="10">${label}</text>
+        </svg>
+      `;
+    }
+
+    function updateTableBackground(allCashedOut, absDiff) {
+      const body = document.body;
+      body.classList.remove('bg-table-neutral', 'bg-table-green', 'bg-table-red');
+
+      if (!allCashedOut || window.tableState.players.length === 0) {
+        body.classList.add('bg-table-neutral');
+      } else if (absDiff < 3.0) {
+        body.classList.add('bg-table-green');
+      } else if (absDiff > 5.0) {
+        body.classList.add('bg-table-red');
+      } else {
+        body.classList.add('bg-table-neutral');
+      }
+    }
+
+    function getPlayerNet(player) {
+      const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+      const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const totalRakePool = window.tableState.players.length * perPersonRake;
+      const isCollector = (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id);
+
+      const net = cash - totalBuy + (isCollector ? totalRakePool : 0);
+      return Math.round(net * 100) / 100;
+    }
+
+    function syncAllTimeRecordsFromCurrent() {
+      if (!window.tableState.allTimeRecords) {
+        window.tableState.allTimeRecords = {
+          biggestBuyin: { amount: 0, date: '' },
+          biggestLoss: { amount: 0, date: '' },
+          totalSessions: 0
+        };
+      }
+      const rec = window.tableState.allTimeRecords;
+      const todayStr = new Date().toLocaleDateString([], { month: 'short', year: 'numeric' });
+
+      window.tableState.players.forEach(p => {
+        const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        if (totalBuy > (parseFloat(rec.biggestBuyin.amount) || 0)) {
+          rec.biggestBuyin.amount = Math.round(totalBuy * 100) / 100;
+          rec.biggestBuyin.date = todayStr;
+        }
+        if (p.hasCashedOut) {
+          const net = getPlayerNet(p);
+          if (net < 0) {
+            const lossAmt = Math.abs(net);
+            if (lossAmt > (parseFloat(rec.biggestLoss.amount) || 0)) {
+              rec.biggestLoss.amount = Math.round(lossAmt * 100) / 100;
+              rec.biggestLoss.date = todayStr;
+            }
+          }
+        }
+      });
+    }
+
+    function computeOptimalSettlement() {
+      const activePlayers = window.tableState.players.filter(p => p.hasCashedOut);
+      if (activePlayers.length === 0) return [];
+
+      const transactions = [];
+      const mode = window.tableState.settlementMode || 'HOUSE';
+      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
+      const totalRakePool = window.tableState.players.length * perPersonRake;
+
+      if (mode === 'HOUSE') {
+        const losers = [];
+        const winners = [];
+
+        window.tableState.players.forEach(p => {
+          if (!p.hasCashedOut) return;
+          const net = getPlayerNet(p);
+          if (net < -0.009) {
+            losers.push({ name: p.name, amount: Math.abs(net) });
+          } else if (net > 0.009) {
+            winners.push({ name: p.name, amount: net });
+          }
+        });
+
+        losers.sort((a, b) => b.amount - a.amount);
+        winners.sort((a, b) => b.amount - a.amount);
+
+        losers.forEach(l => {
+          transactions.push({
+            from: l.name,
+            to: '🏦 House Account',
+            amount: Math.round(l.amount * 100) / 100
+          });
+        });
+
+        winners.forEach(w => {
+          transactions.push({
+            from: '🏦 House Account',
+            to: w.name,
+            amount: Math.round(w.amount * 100) / 100
+          });
+        });
+
+        return transactions;
+      }
+
+      // Peer-to-Peer Greedy Settlement
+      let debtors = [];
+      let creditors = [];
+
+      window.tableState.players.forEach(p => {
+        if (!p.hasCashedOut) return;
+        const net = getPlayerNet(p);
+        if (net < -0.009) {
+          debtors.push({ name: p.name, amount: Math.abs(net) });
+        } else if (net > 0.009) {
+          creditors.push({ name: p.name, amount: net });
+        }
+      });
+
+      // If House Account is the rake collector, include the House Account as a creditor for the rake pool in P2P mode
+      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === 'HOUSE' && totalRakePool > 0.009) {
+        creditors.push({ name: '🏦 House Account (Rake)', amount: totalRakePool });
+      }
+
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      let i = 0;
+      let j = 0;
+
+      while (i < debtors.length && j < creditors.length) {
+        const pay = Math.min(debtors[i].amount, creditors[j].amount);
+        if (pay > 0.009) {
+          transactions.push({
+            from: debtors[i].name,
+            to: creditors[j].name,
+            amount: Math.round(pay * 100) / 100
+          });
+        }
+        debtors[i].amount -= pay;
+        creditors[j].amount -= pay;
+
+        if (debtors[i].amount < 0.009) i++;
+        if (creditors[j].amount < 0.009) j++;
+      }
+
+      return transactions;
+    }
+
+    window.setSettlementMode = function(mode) {
+      window.tableState.settlementMode = mode;
+      broadcastStateChange();
+      showToast(mode === 'HOUSE' ? 'Switched to Central House Bank' : 'Switched to Peer-to-Peer Settlement', mode === 'HOUSE' ? '🏦' : '🤝');
     };
 
     function saveToLocalStorage() {
@@ -704,8 +1081,8 @@
       if (roleBadge) {
         roleBadge.innerText = isLive ? "LIVE SYNC" : "LOCAL";
         roleBadge.className = isLive 
-          ? "text-[10px] tracking-normal font-sans font-bold bg-emerald-950/80 border border-emerald-500 text-emerald-300 px-2 py-0.5 rounded-full" 
-          : "text-[10px] tracking-normal font-sans font-bold bg-felt-700 border border-felt-600 text-amber-300 px-2 py-0.5 rounded-full";
+          ? "text-[10px] tracking-wider font-sans font-extrabold bg-emerald-950/80 border border-emerald-500 text-emerald-300 px-2 py-0.5 rounded-full uppercase" 
+          : "text-[10px] tracking-wider font-sans font-extrabold bg-zinc-800 border border-zinc-700 text-amber-300 px-2 py-0.5 rounded-full uppercase";
       }
       if (footerMode) footerMode.innerText = isLive ? "Cloud Live Sync Active" : "Local Mode (Offline Safe)";
       if (footerPeers) footerPeers.innerText = `Room: ${activeRoomCode}`;
@@ -862,10 +1239,14 @@
       let totalBuyins = 0;
       let totalCashouts = 0;
       let completedCashoutsCount = 0;
+      let totalRebuysCount = 0;
 
       window.tableState.players.forEach(p => {
         const playerBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
         totalBuyins += playerBuy;
+        if (p.buyins.length > 1) {
+          totalRebuysCount += (p.buyins.length - 1);
+        }
         if (p.hasCashedOut) {
           totalCashouts += (parseFloat(p.cashout) || 0);
           completedCashoutsCount++;
@@ -878,231 +1259,134 @@
         totalBuyins: Math.round(totalBuyins * 100) / 100,
         totalCashouts: Math.round(totalCashouts * 100) / 100,
         totalRake: Math.round(totalRake * 100) / 100,
-        completedCashoutsCount
+        completedCashoutsCount,
+        totalRebuysCount
       };
-    }
-
-    function getPlayerNet(player) {
-      const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
-      const totalRakePool = window.tableState.players.length * perPersonRake;
-      const totalBuy = player.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
-      const cash = player.hasCashedOut ? (parseFloat(player.cashout) || 0) : 0;
-
-      let net = cash - totalBuy;
-      if (window.tableState.rakeEnabled && window.tableState.rakeCollector === player.id) {
-        net += totalRakePool;
-      }
-      return Math.round(net * 100) / 100;
-    }
-
-    function updateTableBackground(allCashedOut, discrepancy) {
-      const body = document.body;
-      body.classList.remove('bg-table-neutral', 'bg-table-green', 'bg-table-red');
-
-      if (allCashedOut) {
-        if (discrepancy < 3) {
-          body.classList.add('bg-table-green');
-        } else if (discrepancy > 5) {
-          body.classList.add('bg-table-red');
-        } else {
-          body.classList.add('bg-table-neutral');
-        }
-      } else {
-        body.classList.add('bg-table-neutral');
-      }
-    }
-
-    function syncAllTimeRecordsFromCurrent() {
-      let updated = false;
-      const today = new Date().toLocaleDateString();
-
-      window.tableState.players.forEach(p => {
-        const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
-        if (totalBuy > (window.tableState.allTimeRecords.biggestBuyin.amount || 0)) {
-          window.tableState.allTimeRecords.biggestBuyin = {
-            amount: totalBuy,
-            date: today
-          };
-          updated = true;
-        }
-
-        if (p.hasCashedOut) {
-          const net = getPlayerNet(p);
-          if (net < 0 && Math.abs(net) > (window.tableState.allTimeRecords.biggestLoss.amount || 0)) {
-            window.tableState.allTimeRecords.biggestLoss = {
-              amount: Math.abs(net),
-              date: today
-            };
-            updated = true;
-          }
-        }
-      });
-
-      return updated;
-    }
-
-    function computeOptimalSettlement() {
-      if (window.tableState.rakeCollector === 'HOUSE') {
-        const transactions = [];
-
-        window.tableState.players.forEach(p => {
-          const net = getPlayerNet(p);
-          if (net < -0.009) {
-            transactions.push({
-              from: p.name,
-              to: '🏦 House Account',
-              amount: Math.round(Math.abs(net) * 100) / 100,
-              type: 'INTO_HOUSE'
-            });
-          }
-        });
-
-        window.tableState.players.forEach(p => {
-          const net = getPlayerNet(p);
-          if (net > 0.009) {
-            transactions.push({
-              from: '🏦 House Account',
-              to: p.name,
-              amount: Math.round(net * 100) / 100,
-              type: 'OUT_OF_HOUSE'
-            });
-          }
-        });
-
-        return transactions;
-      }
-
-      const balances = window.tableState.players.map(p => ({
-        id: p.id,
-        name: p.name,
-        net: getPlayerNet(p)
-      }));
-
-      let debtors = balances.filter(b => b.net < -0.009).map(b => ({ ...b, amount: Math.abs(b.net) }));
-      let creditors = balances.filter(b => b.net > 0.009).map(b => ({ ...b, amount: b.net }));
-
-      debtors.sort((a, b) => b.amount - a.amount);
-      creditors.sort((a, b) => b.amount - a.amount);
-
-      const transactions = [];
-      let dIdx = 0;
-      let cIdx = 0;
-
-      while (dIdx < debtors.length && cIdx < creditors.length) {
-        const debtor = debtors[dIdx];
-        const creditor = creditors[cIdx];
-
-        const settlementAmount = Math.min(debtor.amount, creditor.amount);
-        const roundedAmount = Math.round(settlementAmount * 100) / 100;
-
-        if (roundedAmount > 0) {
-          transactions.push({
-            from: debtor.name,
-            to: creditor.name,
-            amount: roundedAmount,
-            type: 'P2P'
-          });
-        }
-
-        debtor.amount = Math.round((debtor.amount - settlementAmount) * 100) / 100;
-        creditor.amount = Math.round((creditor.amount - settlementAmount) * 100) / 100;
-
-        if (debtor.amount <= 0.009) dIdx++;
-        if (creditor.amount <= 0.009) cIdx++;
-      }
-
-      return transactions;
     }
 
     function renderIntegrityBanner() {
       const banner = document.getElementById('integrityBanner');
       const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount } = calculateTotals();
+      const sym = window.tableState.currency;
       
       const totalAccounted = Math.round((totalCashouts + totalRake) * 100) / 100;
       const diff = Math.round((totalAccounted - totalBuyins) * 100) / 100;
       const allCashedOut = window.tableState.players.length > 0 && completedCashoutsCount === window.tableState.players.length;
+      const expectedChipsInPlay = Math.max(0, Math.round((totalBuyins - totalRake) * 100) / 100);
 
       updateTableBackground(allCashedOut, Math.abs(diff));
 
+      const formulaPills = `
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-mono bg-black/45 px-3 py-2 rounded-xl border border-white/10 w-full lg:w-auto justify-center">
+          <div class="flex items-center gap-1">
+            <span class="text-gray-400 font-sans">Buy-ins</span>
+            <span class="text-amber-300 font-bold">${sym}${totalBuyins.toFixed(2)}</span>
+          </div>
+          <span class="text-gray-500">=</span>
+          <div class="flex items-center gap-1">
+            <span class="text-gray-400 font-sans">Cashouts</span>
+            <span class="text-blue-300 font-bold">${sym}${totalCashouts.toFixed(2)}</span>
+          </div>
+          <span class="text-gray-500">+</span>
+          <div class="flex items-center gap-1">
+            <span class="text-gray-400 font-sans">Rake</span>
+            <span class="text-gold-400 font-bold">${sym}${totalRake.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+
       if (window.tableState.players.length === 0) {
-        banner.className = "p-4 rounded-xl border border-felt-700 bg-felt-900/60 text-gray-400 flex flex-col md:flex-row items-center justify-between";
+        banner.className = "p-4 rounded-2xl border border-white/10 bg-[#14171c]/80 text-gray-400 flex flex-col md:flex-row items-center justify-between";
         banner.innerHTML = `
           <div class="flex items-center space-x-3">
             <span class="text-2xl">🃏</span>
             <div>
               <h3 class="font-bold text-gray-200">Table is Empty</h3>
-              <p class="text-xs text-gray-400">Add players or invite your buddies with Room Code <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
+              <p class="text-xs text-gray-400">Tap "Seat OG Regulars" or "Add Player" to start the game in Room <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
             </div>
           </div>
         `;
         return;
       }
 
-      const expectedChipsInPlay = Math.max(0, Math.round((totalBuyins - totalRake) * 100) / 100);
-
       if (Math.abs(diff) < 0.01) {
-        banner.className = "p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-r from-felt-900 via-emerald-950/40 to-felt-900 text-white shadow-lg shadow-emerald-950/40 flex flex-col sm:flex-row items-center justify-between gap-4";
+        banner.className = "p-4 sm:p-5 rounded-2xl border border-emerald-500/60 bg-gradient-to-r from-emerald-950/70 via-[#0a2316] to-emerald-950/60 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4";
         banner.innerHTML = `
-          <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-300 text-xl font-bold flex-shrink-0">
               ✓
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-base sm:text-lg text-emerald-300">Table is Perfectly Balanced!</h3>
-                <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-500/30">Verified</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-base sm:text-lg text-emerald-300">Table Perfectly Balanced!</h3>
+                <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/30">0.00 Discrepancy</span>
               </div>
               <p class="text-xs text-gray-300 mt-0.5">
-                Total Buy-ins (<strong class="text-white">${window.tableState.currency}${totalBuyins.toFixed(2)}</strong>) &minus; Upfront Rake (<strong class="text-white">${window.tableState.currency}${totalRake.toFixed(2)}</strong>) = Table Chips in Play (<strong class="text-white">${window.tableState.currency}${totalCashouts.toFixed(2)}</strong>).
+                All <strong class="text-white">${sym}${expectedChipsInPlay.toFixed(2)}</strong> of table chips in play plus <strong class="text-gold-300">${sym}${totalRake.toFixed(2)}</strong> house rake are 100% accounted for.
               </p>
             </div>
           </div>
-          <div class="px-3 py-1.5 rounded-lg bg-emerald-900/50 border border-emerald-500/30 text-emerald-200 text-xs font-semibold whitespace-nowrap">
-            Discrepancy: ${window.tableState.currency}0.00
+          ${formulaPills}
+        `;
+      } else if (!allCashedOut && diff < 0) {
+        const remaining = Math.abs(diff);
+        banner.className = "p-4 sm:p-5 rounded-2xl border border-white/15 bg-[#14171c]/95 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4";
+        banner.innerHTML = `
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-gold-500/15 border border-gold-400/40 flex items-center justify-center text-gold-400 text-xl flex-shrink-0 animate-float">
+              ♠️
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-base sm:text-lg text-amber-100">Live Game In Progress</h3>
+                <span class="bg-gold-500/20 text-gold-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-gold-500/30">${sym}${remaining.toFixed(2)} In Play</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">
+                Expected table chips: <strong class="text-white font-mono">${sym}${expectedChipsInPlay.toFixed(2)}</strong> after upfront rake (${completedCashoutsCount}/${window.tableState.players.length} stacks entered).
+              </p>
+            </div>
           </div>
+          ${formulaPills}
         `;
       } else if (diff < 0) {
         const missing = Math.abs(diff);
-        banner.className = "p-4 sm:p-5 rounded-xl border border-amber-600/60 bg-gradient-to-r from-amber-950/30 via-felt-900 to-amber-950/20 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4";
+        const isMinor = missing < 3;
+        banner.className = `p-4 sm:p-5 rounded-2xl border ${isMinor ? 'border-emerald-500/50 bg-emerald-950/40' : 'border-amber-500/60 bg-amber-950/40'} text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4`;
         banner.innerHTML = `
-          <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-2xl flex-shrink-0">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl ${isMinor ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300' : 'bg-amber-500/20 border-amber-400/50 text-amber-300'} border flex items-center justify-center text-xl flex-shrink-0">
               ⚠️
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-base sm:text-lg text-amber-300">Unaccounted Chips: Missing ${window.tableState.currency}${missing.toFixed(2)}</h3>
-                <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/30">${allCashedOut ? 'Discrepancy' : 'Live Game'}</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-base sm:text-lg ${isMinor ? 'text-emerald-300' : 'text-amber-300'}">Missing Chips: -${sym}${missing.toFixed(2)}</h3>
+                <span class="bg-black/40 text-gray-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-white/15">${isMinor ? 'Within < €3 Tolerance' : 'Recount Needed'}</span>
               </div>
               <p class="text-xs text-gray-300 mt-0.5">
-                Expected ${window.tableState.currency}${expectedChipsInPlay.toFixed(2)} in chips across the table after upfront rake. ${allCashedOut ? 'Check table felt or recount stacks.' : 'Players still need to enter their cashout chip stack.'}
+                Expected <strong class="font-mono text-white">${sym}${expectedChipsInPlay.toFixed(2)}</strong> in chips across the table, but only <strong class="font-mono text-white">${sym}${totalCashouts.toFixed(2)}</strong> was counted.
               </p>
             </div>
           </div>
-          <div class="px-3 py-1.5 rounded-lg bg-amber-900/40 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold whitespace-nowrap">
-            -${window.tableState.currency}${missing.toFixed(2)}
-          </div>
+          ${formulaPills}
         `;
       } else {
-        banner.className = "p-4 sm:p-5 rounded-xl border border-rose-600/70 bg-gradient-to-r from-rose-950/30 via-felt-900 to-rose-950/20 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4";
+        banner.className = "p-4 sm:p-5 rounded-2xl border border-rose-500/70 bg-gradient-to-r from-rose-950/60 via-[#1f070b] to-rose-950/50 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4";
         banner.innerHTML = `
-          <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-400 text-2xl flex-shrink-0">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-400 text-xl flex-shrink-0">
               🚨
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-base sm:text-lg text-rose-300">Surplus Chips: Extra +${window.tableState.currency}${diff.toFixed(2)}</h3>
-                <span class="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-rose-500/30">Over-Count</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-base sm:text-lg text-rose-300">Uncounted Chip Surplus: +${sym}${diff.toFixed(2)}</h3>
+                <span class="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-rose-500/40">Over-Count / Missing Rebuy</span>
               </div>
-              <p class="text-xs text-gray-300 mt-0.5">
-                Cashouts exceed Buy-ins. Check if an unrecorded rebuy occurred.
+              <p class="text-xs text-rose-200/90 mt-0.5">
+                Counted stacks exceed total chips in play by <strong class="font-mono text-white">+${sym}${diff.toFixed(2)}</strong>. Check if someone forgot to log a €10 or €20 rebuy!
               </p>
             </div>
           </div>
-          <div class="px-3 py-1.5 rounded-lg bg-rose-900/40 border border-rose-500/30 text-rose-300 font-mono text-xs font-bold whitespace-nowrap">
-            +${window.tableState.currency}${diff.toFixed(2)}
-          </div>
+          ${formulaPills}
         `;
       }
     }
@@ -1119,8 +1403,8 @@
 
       if (window.tableState.rakeEnabled) {
         inputsContainer.classList.remove('opacity-50', 'pointer-events-none');
-        statusBadge.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gold-500/40 text-gold-300 bg-gold-950/40";
-        statusBadge.innerText = `${window.tableState.currency}${window.tableState.rakePerPerson}/player`;
+        statusBadge.className = "text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-gold-500/40 text-gold-300 bg-gold-950/50";
+        statusBadge.innerText = `${window.tableState.currency}${window.tableState.rakePerPerson} / Player`;
       } else {
         inputsContainer.classList.add('opacity-50', 'pointer-events-none');
         statusBadge.className = "text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-gray-600 text-gray-400";
@@ -1128,7 +1412,7 @@
       }
 
       const currentSelected = window.tableState.rakeCollector;
-      collectorSelect.innerHTML = `<option value="HOUSE">House Account</option>`;
+      collectorSelect.innerHTML = `<option value="HOUSE">🏦 House Account</option>`;
       window.tableState.players.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
@@ -1144,27 +1428,72 @@
     }
 
     function renderOverviewStats() {
-      const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount } = calculateTotals();
+      const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount, totalRebuysCount } = calculateTotals();
+      const sym = window.tableState.currency;
+      const totalPlayers = window.tableState.players.length;
+      const allCashedOut = totalPlayers > 0 && completedCashoutsCount === totalPlayers;
+      const diff = Math.round((totalCashouts + totalRake - totalBuyins) * 100) / 100;
+
+      document.getElementById('statTotalBuyin').innerText = `${sym}${totalBuyins.toFixed(2)}`;
+      document.getElementById('statTotalCashout').innerText = `${sym}${totalCashouts.toFixed(2)}`;
+      document.getElementById('statPlayerCount').innerText = `${totalPlayers} seated`;
+      document.getElementById('statTotalRebuysMini').innerText = `${totalRebuysCount} rebuy${totalRebuysCount === 1 ? '' : 's'}`;
+      document.getElementById('statCashedCount').innerText = `${completedCashoutsCount} of ${totalPlayers} verified`;
       
-      document.getElementById('statTotalBuyin').innerText = `${window.tableState.currency}${totalBuyins.toFixed(2)}`;
-      document.getElementById('statTotalCashout').innerText = `${window.tableState.currency}${totalCashouts.toFixed(2)}`;
-      document.getElementById('statPlayerCount').innerText = `${window.tableState.players.length} seated`;
-      document.getElementById('statCashedCount').innerText = `${completedCashoutsCount} of ${window.tableState.players.length} stacks verified`;
-      document.getElementById('playerBadgeCount').innerText = window.tableState.players.length;
+      const pct = totalPlayers > 0 ? Math.round((completedCashoutsCount / totalPlayers) * 100) : 0;
+      document.getElementById('statCashedPercent').innerText = `${pct}%`;
+      document.getElementById('statCashedProgressBar').style.width = `${pct}%`;
+      document.getElementById('playerBadgeCount').innerText = totalPlayers;
 
       const statRake = document.getElementById('statTotalRake');
       const statRakeDesc = document.getElementById('statRakeCollectorDesc');
       if (window.tableState.rakeEnabled) {
-        statRake.innerText = `${window.tableState.currency}${totalRake.toFixed(2)}`;
+        statRake.innerText = `${sym}${totalRake.toFixed(2)}`;
         let collectorName = 'House Account';
         if (window.tableState.rakeCollector !== 'HOUSE') {
           const colPlayer = window.tableState.players.find(p => p.id === window.tableState.rakeCollector);
           if (colPlayer) collectorName = `${colPlayer.name} (Host)`;
         }
-        statRakeDesc.innerText = `Held by: ${collectorName}`;
+        statRakeDesc.innerText = `Banker: ${collectorName}`;
       } else {
-        statRake.innerText = `${window.tableState.currency}0.00`;
+        statRake.innerText = `${sym}0.00`;
         statRakeDesc.innerText = 'Rake turned off';
+      }
+
+      // Update Dedicated Discrepancy Metric Card
+      const discCard = document.getElementById('discrepancyMetricCard');
+      const discVal = document.getElementById('statDiscrepancyValue');
+      const discSub = document.getElementById('statDiscrepancySub');
+      const discIcon = document.getElementById('statDiscrepancyIcon');
+
+      if (Math.abs(diff) < 0.01 && totalPlayers > 0) {
+        discCard.className = "bg-emerald-950/40 border border-emerald-500/60 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden transition-colors duration-300";
+        discVal.className = "text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 my-1 tracking-tight";
+        discVal.innerText = `${sym}0.00`;
+        discSub.className = "text-[11px] text-emerald-300 font-semibold truncate";
+        discSub.innerText = "✓ Perfect Balance";
+        discIcon.innerText = "✅";
+      } else if (diff > 0.009) {
+        discCard.className = "bg-rose-950/50 border border-rose-500/70 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden transition-colors duration-300";
+        discVal.className = "text-2xl sm:text-3xl font-extrabold font-mono text-rose-400 my-1 tracking-tight";
+        discVal.innerText = `+${sym}${diff.toFixed(2)}`;
+        discSub.className = "text-[11px] text-rose-300 font-semibold truncate";
+        discSub.innerText = "🚨 Uncounted Surplus";
+        discIcon.innerText = "🚨";
+      } else if (!allCashedOut) {
+        discCard.className = "bg-[#14171c]/90 border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden transition-colors duration-300";
+        discVal.className = "text-2xl sm:text-3xl font-extrabold font-mono text-amber-300 my-1 tracking-tight";
+        discVal.innerText = `-${sym}${Math.abs(diff).toFixed(2)}`;
+        discSub.className = "text-[11px] text-gray-400 truncate";
+        discSub.innerText = `⏳ ${totalPlayers - completedCashoutsCount} stack(s) pending`;
+        discIcon.innerText = "⏳";
+      } else {
+        discCard.className = "bg-amber-950/40 border border-amber-500/60 p-4 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden transition-colors duration-300";
+        discVal.className = "text-2xl sm:text-3xl font-extrabold font-mono text-amber-400 my-1 tracking-tight";
+        discVal.innerText = `-${sym}${Math.abs(diff).toFixed(2)}`;
+        discSub.className = "text-[11px] text-amber-300 font-semibold truncate";
+        discSub.innerText = "⚠️ Missing Chips";
+        discIcon.innerText = "⚠️";
       }
 
       let maxWin = 0;
@@ -1173,6 +1502,7 @@
       let topLoser = null;
 
       window.tableState.players.forEach(p => {
+        if (!p.hasCashedOut) return;
         const net = getPlayerNet(p);
         if (net > maxWin) {
           maxWin = net;
@@ -1188,24 +1518,24 @@
       const winnerAmt = document.getElementById('statTopWinnerAmt');
       if (topWinner && maxWin > 0.009) {
         winnerElem.innerText = topWinner.name;
-        winnerAmt.innerText = `+${window.tableState.currency}${maxWin.toFixed(2)}`;
+        winnerAmt.innerText = `+${sym}${maxWin.toFixed(2)}`;
       } else {
         winnerElem.innerText = '-';
-        winnerAmt.innerText = `+${window.tableState.currency}0.00`;
+        winnerAmt.innerText = `+${sym}0.00`;
       }
 
       const loserElem = document.getElementById('statTopLoser');
       const loserAmt = document.getElementById('statTopLoserAmt');
       if (topLoser && maxLoss < -0.009) {
         loserElem.innerText = topLoser.name;
-        loserAmt.innerText = `-${window.tableState.currency}${Math.abs(maxLoss).toFixed(2)}`;
+        loserAmt.innerText = `-${sym}${Math.abs(maxLoss).toFixed(2)}`;
       } else {
         loserElem.innerText = '-';
-        loserAmt.innerText = `-${window.tableState.currency}0.00`;
+        loserAmt.innerText = `-${sym}0.00`;
       }
 
       document.querySelectorAll('.currencySymbol').forEach(el => {
-        el.innerText = window.tableState.currency;
+        el.innerText = sym;
       });
 
       const claimedBadge = document.getElementById('myClaimedBadge');
@@ -1231,7 +1561,10 @@
           <div class="col-span-full py-12 text-center text-gray-400 bg-zinc-900/40 rounded-2xl border border-dashed border-zinc-700">
             <span class="text-4xl block mb-2">♠</span>
             <p class="text-base font-semibold text-gray-300">No players seated at this table</p>
-            <p class="text-xs text-gray-500 mt-1">Tap "Add Player" or invite friends with Room Code <span class="font-mono text-gold-400 font-bold">${activeRoomCode}</span>.</p>
+            <p class="text-xs text-gray-500 mt-1 mb-4">Tap "Seat OG Regulars" to load Maarten, Lucas, Matthieu, JJ &amp; Nick.</p>
+            <button onclick="window.seatRegulars()" class="px-4 py-2 gold-shimmer text-amber-200 font-bold rounded-xl text-xs shadow-lg">
+              👥 Seat OG Regulars
+            </button>
           </div>
         `;
         return;
@@ -1239,6 +1572,7 @@
 
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
       const totalRakePool = window.tableState.players.length * perPersonRake;
+      const sym = window.tableState.currency;
 
       window.tableState.players.forEach((p) => {
         const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
@@ -1252,33 +1586,33 @@
         let cardColorClasses = '';
 
         if (!p.hasCashedOut) {
-          cardColorClasses = 'bg-[#181a1f] border-zinc-700/80 hover:border-zinc-500 shadow-xl';
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-semibold rounded bg-zinc-800 text-gray-400 border border-zinc-600">Active Game</span>`;
+          cardColorClasses = 'bg-[#15181e]/95 border-white/10 hover:border-white/25 shadow-xl';
+          profitBadge = `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-zinc-800 text-gray-400 border border-white/10">In Play</span>`;
         } else if (roundedNet > 0.009) {
-          cardColorClasses = 'bg-[#062413] border-emerald-500/80 shadow-xl shadow-emerald-950/60 ring-1 ring-emerald-500/40';
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/90 text-emerald-300 border border-emerald-600 shadow">+${window.tableState.currency}${roundedNet.toFixed(2)}</span>`;
+          cardColorClasses = 'bg-[#062414]/95 border-emerald-500/80 shadow-xl shadow-emerald-950/50 ring-1 ring-emerald-500/30';
+          profitBadge = `<span class="px-2.5 py-0.5 text-xs font-mono font-extrabold rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/60 shadow">+${sym}${roundedNet.toFixed(2)}</span>`;
         } else if (roundedNet < -0.009) {
-          cardColorClasses = 'bg-red-500/[0.06] border-red-500/30 shadow-xl shadow-red-950/10 ring-1 ring-red-500/20';
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-red-950/40 text-rose-300 border border-red-500/40 shadow-sm">-${window.tableState.currency}${Math.abs(roundedNet).toFixed(2)}</span>`;
+          cardColorClasses = 'bg-red-500/[0.06] border-red-500/35 shadow-xl shadow-red-950/10 ring-1 ring-red-500/20';
+          profitBadge = `<span class="px-2.5 py-0.5 text-xs font-mono font-extrabold rounded-md bg-red-950/60 text-rose-300 border border-red-500/40 shadow-sm">-${sym}${Math.abs(roundedNet).toFixed(2)}</span>`;
         } else {
-          cardColorClasses = 'bg-[#181a1f] border-zinc-500 shadow-xl';
-          profitBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded bg-zinc-800 text-gray-300 border border-zinc-600">Even</span>`;
+          cardColorClasses = 'bg-[#15181e]/95 border-zinc-500 shadow-xl';
+          profitBadge = `<span class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-md bg-zinc-800 text-gray-300 border border-zinc-600">Even (${sym}0)</span>`;
         }
 
         const seatRing = isMySeat ? 'ring-2 ring-gold-400 border-gold-400' : '';
 
         const card = document.createElement('div');
-        card.className = `${cardColorClasses} ${seatRing} rounded-xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between relative group`;
+        card.className = `casino-card ${cardColorClasses} ${seatRing} rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative group border`;
         
         card.innerHTML = `
           <div>
-            <!-- Header: Avatar, Name & Edit -->
-            <div class="flex items-center justify-between pb-3 border-b border-white/10">
-              <div class="flex items-center space-x-3 overflow-hidden">
+            <!-- Header: Larger Photo Avatar, Name & Actions -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-white/10">
+              <div class="flex items-center space-x-3.5 overflow-hidden">
                 <div 
-                  class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-base shadow-md ring-2 ring-white/10 hover:ring-gold-400 hover:scale-105 transition-all cursor-pointer overflow-hidden relative group/avatar" 
+                  class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg ring-2 ring-gold-400/40 hover:ring-gold-300 hover:scale-105 transition-all cursor-pointer overflow-hidden relative group/avatar" 
                   style="background-color: ${p.color};"
-                  title="Click to view ${escapeHtml(p.name)}'s photo in large"
+                  title="Tap to view ${escapeHtml(p.name)}'s photo"
                   onclick="window.openPhotoModal('${p.id}')"
                 >
                   <img 
@@ -1287,132 +1621,144 @@
                     class="w-full h-full object-cover object-center"
                     onerror="if(!this.dataset.triedJpg){ this.dataset.triedJpg='1'; this.src='${encodeURIComponent(p.name)}.jpg'; } else { this.style.display='none'; const fb = this.nextElementSibling; if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); } }"
                   />
-                  <div class="w-full h-full items-center justify-center text-white font-bold text-base absolute inset-0 hidden" style="background-color: ${p.color};">
+                  <div class="w-full h-full items-center justify-center text-white font-serif font-bold text-lg absolute inset-0 hidden" style="background-color: ${p.color};">
                     ${escapeHtml(p.name.charAt(0).toUpperCase())}
                   </div>
-                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-xs text-white transition-opacity">
+                  <div class="absolute inset-0 bg-black/45 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-xs text-white transition-opacity">
                     🔍
                   </div>
                 </div>
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span 
-                      class="font-bold text-base text-white truncate cursor-pointer hover:text-gold-300 transition flex items-center gap-1 group/name" 
-                      title="Click to rename" 
+                      class="font-bold text-base sm:text-lg text-white truncate cursor-pointer hover:text-gold-300 transition flex items-center gap-1 group/name" 
+                      title="Click to edit ${escapeHtml(p.name)}" 
                       onclick="window.openEditPlayerModal('${p.id}')"
                     >
                       <span>${escapeHtml(p.name)}</span>
                       <svg class="w-3.5 h-3.5 text-gray-500 group-hover/name:text-gold-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     </span>
-                    ${isCollector ? `<span class="bg-gold-500/20 text-gold-300 text-[10px] px-1.5 py-0.5 rounded border border-gold-500/30 font-bold whitespace-nowrap">HOST</span>` : ''}
-                    ${isMySeat ? `<span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 font-bold whitespace-nowrap">YOU</span>` : ''}
+                    ${isCollector ? `<span class="bg-gold-500/20 text-gold-300 text-[10px] px-1.5 py-0.5 rounded border border-gold-500/30 font-bold">HOST</span>` : ''}
+                    ${isMySeat ? `<span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 font-bold">YOU</span>` : ''}
                   </div>
-                  <div class="flex items-center gap-1.5 text-[11px] text-gray-400">
+                  <div class="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
                     <span>${p.buyins.length} Buy-in${p.buyins.length > 1 ? 's' : ''}</span>
-                    ${rebuysCount > 0 ? `<span class="text-amber-400 font-medium">(${rebuysCount} Re-buy)</span>` : ''}
+                    ${rebuysCount > 0 ? `<span class="text-amber-400 font-semibold">&bull; ${rebuysCount} Rebuy${rebuysCount > 1 ? 's' : ''}</span>` : ''}
                   </div>
                 </div>
               </div>
 
               <!-- Top Card Actions -->
               <div class="flex items-center space-x-1 flex-shrink-0">
-                <button onclick="window.claimSeat('${p.id}')" title="${isMySeat ? 'Unclaim seat' : 'Claim this is my seat on this phone'}" class="text-xs px-2 py-1 rounded border transition ${isMySeat ? 'bg-gold-500 text-black font-bold border-gold-400' : 'bg-black/40 text-gray-300 hover:text-white border-white/20'}">
-                  ${isMySeat ? 'My Seat ✓' : 'Claim'}
+                <button onclick="window.claimSeat('${p.id}')" title="${isMySeat ? 'Unclaim seat' : 'Mark as my seat'}" class="text-[11px] px-2.5 py-1 rounded-lg border transition ${isMySeat ? 'gold-shimmer text-amber-200 font-bold border-gold-400' : 'bg-black/40 text-gray-300 hover:text-white border-white/15'}">
+                  ${isMySeat ? 'Me ✓' : 'Claim'}
                 </button>
-                <button onclick="window.openEditPlayerModal('${p.id}')" title="Edit player" class="text-gray-400 hover:text-gold-400 p-1 rounded transition">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                </button>
-                <button onclick="window.removePlayer('${p.id}')" title="Remove Player" class="text-gray-400 hover:text-red-400 p-1 rounded transition">
+                <button onclick="window.removePlayer('${p.id}')" title="Remove Player" class="text-gray-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-white/5 transition">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>
             </div>
 
-            <!-- Buyin & Quick Rebuy Buttons (+20€ Prioritized) -->
-            <div class="mt-3.5 space-y-2">
-              <div class="flex justify-between items-center text-xs">
-                <span class="text-gray-400">Total Buy-in:</span>
-                <span class="font-bold text-amber-300 font-mono text-sm">${window.tableState.currency}${totalBuy.toFixed(2)}</span>
+            <!-- Buy-in Summary & Prominent €10 / €20 Rebuy Controls -->
+            <div class="mt-3.5 space-y-2.5">
+              <div class="grid grid-cols-2 gap-2 bg-black/35 p-2.5 rounded-xl border border-white/5 text-xs">
+                <div>
+                  <span class="text-gray-400 block text-[10px] uppercase font-semibold">Total Buy-in</span>
+                  <span class="font-extrabold text-amber-300 font-mono text-sm">${sym}${totalBuy.toFixed(2)}</span>
+                </div>
+                <div class="text-right border-l border-white/10 pl-2">
+                  <span class="text-gray-400 block text-[10px] uppercase font-semibold">${window.tableState.rakeEnabled ? `Net Chips (-${sym}${perPersonRake} rake)` : 'Starting Chips'}</span>
+                  <span class="font-bold text-emerald-300 font-mono text-sm">${sym}${chipsReceived.toFixed(2)}</span>
+                </div>
               </div>
 
-              ${window.tableState.rakeEnabled ? `
-                <div class="flex justify-between items-center text-xs text-gold-400/90 bg-gold-950/40 px-2 py-1 rounded border border-gold-500/20">
-                  <span>Upfront Rake from Starting Chips:</span>
-                  <span class="font-mono font-semibold">-${window.tableState.currency}${perPersonRake.toFixed(2)}</span>
+              ${isCollector && window.tableState.rakeEnabled ? `
+                <div class="flex justify-between items-center text-xs text-emerald-300 bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-500/30">
+                  <span>🏦 Host Rake Pool Held:</span>
+                  <span class="font-mono font-bold">+${sym}${totalRakePool.toFixed(2)}</span>
                 </div>
-                <div class="flex justify-between items-center text-xs text-emerald-300/90 bg-black/30 px-2 py-1 rounded border border-white/10">
-                  <span>Chips Given to Table:</span>
-                  <span class="font-mono font-bold">${window.tableState.currency}${chipsReceived.toFixed(2)}</span>
-                </div>
-                ${isCollector ? `
-                  <div class="flex justify-between items-center text-xs text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/30">
-                    <span>House Rake Collected:</span>
-                    <span class="font-mono font-semibold">+${window.tableState.currency}${totalRakePool.toFixed(2)}</span>
-                  </div>
-                ` : ''}
               ` : ''}
 
-              <!-- Rebuy quick-add buttons -->
-              <div class="bg-black/40 p-2 rounded-lg border border-white/10 flex items-center justify-between gap-1">
-                <span class="text-[11px] text-gray-400 font-medium">Rebuy:</span>
-                <div class="flex items-center gap-1">
-                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="px-2.5 py-0.5 bg-gold-600 hover:bg-gold-500 text-black rounded text-[11px] font-bold border border-gold-400 transition shadow" title="Default €20 Rebuy">
-                    +${window.tableState.currency}20
+              <!-- Prominent +€10 and +€20 Quick Rebuy Bar -->
+              <div class="bg-black/45 p-2 rounded-xl border border-white/10">
+                <div class="flex items-center justify-between mb-1.5 px-1">
+                  <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Quick Rebuy</span>
+                  <button onclick="window.promptCustomBuyin('${p.id}')" class="text-[10px] text-amber-300 hover:text-amber-200 font-semibold underline decoration-amber-500/40" title="Custom Rebuy Amount">
+                    +Other Amount
                   </button>
-                  <button onclick="window.addQuickRebuy('${p.id}', 10)" class="px-2 py-0.5 bg-black/40 hover:bg-white/10 text-white rounded text-[11px] font-semibold border border-white/20 transition">
-                    +${window.tableState.currency}10
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button onclick="window.addQuickRebuy('${p.id}', 10)" class="py-2 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 rounded-lg text-xs font-mono font-extrabold border border-amber-400/30 transition shadow-sm flex items-center justify-center gap-1" title="Instant +€10 Rebuy">
+                    <span>🪙</span>
+                    <span>+${sym}10</span>
                   </button>
-                  <button onclick="window.promptCustomBuyin('${p.id}')" class="px-2 py-0.5 bg-amber-950/70 hover:bg-amber-900 text-amber-300 rounded text-[11px] font-semibold border border-amber-700/80 transition" title="Custom Buyin">
-                    +Custom
+                  <button onclick="window.addQuickRebuy('${p.id}', 20)" class="py-2 px-3 bg-gold-500/20 hover:bg-gold-500/30 text-gold-200 rounded-lg text-xs font-mono font-extrabold border border-gold-400/45 transition shadow-sm flex items-center justify-center gap-1" title="Instant +€20 Rebuy">
+                    <span>💵</span>
+                    <span>+${sym}20</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- End Cash-out Stack Input -->
+            <!-- End Cash-out Stack Input & Quick Busted Button -->
             <div class="mt-4 pt-3 border-t border-white/10">
-              <div class="flex justify-between items-center mb-1.5">
-                <label class="text-xs font-semibold text-gray-300 flex items-center gap-1">
-                  <span>End Chip Stack</span>
-                  <span class="text-[10px] text-gray-400 font-normal">(Cash Out)</span>
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-xs font-bold text-gray-200 flex items-center gap-1.5">
+                  <span>Final Stack</span>
+                  <div>${profitBadge}</div>
                 </label>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    onclick="window.updateCashout('${p.id}', '0')"
+                    class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 rounded-lg text-[11px] font-semibold transition"
+                    title="Set final stack to €0 (Felted / Busted)"
+                  >
+                    Busted (€0)
+                  </button>
                   <button 
                     type="button" 
                     onclick="window.openChipModal('${p.id}')"
-                    class="px-2 py-0.5 bg-felt-800 hover:bg-gold-500 hover:text-black text-gold-300 border border-gold-500/40 rounded text-[11px] font-semibold transition flex items-center gap-1 shadow-sm"
+                    class="px-2.5 py-1 bg-zinc-800 hover:bg-gold-500 hover:text-black text-gold-300 border border-gold-500/40 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-sm"
                     title="Calculate stack by counting physical chips"
                   >
                     <span>🧮</span>
-                    <span>Count Chips</span>
+                    <span>Chips</span>
                   </button>
-                  <div>${profitBadge}</div>
                 </div>
               </div>
 
-              <div class="relative rounded-lg shadow-inner">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gold-400 font-bold text-sm">
-                  ${window.tableState.currency}
+              <div class="relative rounded-xl shadow-inner">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gold-400 font-mono font-bold text-sm">
+                  ${sym}
                 </span>
                 <input 
                   type="number" 
                   step="any"
                   min="0"
-                  placeholder="Enter final chips"
+                  placeholder="Enter final chip value..."
                   value="${p.hasCashedOut ? p.cashout : ''}"
                   onchange="window.updateCashout('${p.id}', this.value)"
-                  class="w-full bg-black/40 border ${p.hasCashedOut ? (roundedNet > 0.009 ? 'border-emerald-500 focus:ring-emerald-400' : (roundedNet < -0.009 ? 'border-rose-500 focus:ring-rose-400' : 'border-zinc-500')) : 'border-zinc-600 focus:ring-gold-400'} rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:ring-2"
+                  class="w-full bg-black/50 border ${p.hasCashedOut ? (roundedNet > 0.009 ? 'border-emerald-500 focus:ring-emerald-400' : (roundedNet < -0.009 ? 'border-rose-500/80 focus:ring-rose-400' : 'border-zinc-500')) : 'border-white/15 focus:ring-gold-400'} rounded-xl pl-8 pr-9 py-2.5 text-white font-mono font-bold text-sm placeholder-gray-500 focus:outline-none focus:ring-2 transition"
                 >
+                ${p.hasCashedOut ? `
+                  <button type="button" onclick="window.updateCashout('${p.id}', '')" title="Clear cashout status (back to active play)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white text-sm font-bold">
+                    &times;
+                  </button>
+                ` : ''}
               </div>
             </div>
           </div>
 
-          <!-- History / Undo Rebuy -->
-          <div class="mt-3 pt-2 text-[11px] text-gray-400 flex items-center justify-between border-t border-white/10">
-            <span class="truncate max-w-[190px]">Buyins: [${p.buyins.map(b => `${window.tableState.currency}${b}`).join(', ')}]</span>
+          <!-- Buy-in Pills & Undo Rebuy Footer -->
+          <div class="mt-3 pt-2.5 text-[11px] text-gray-400 flex items-center justify-between border-t border-white/10">
+            <div class="flex items-center gap-1 flex-wrap">
+              <span class="text-gray-500 mr-0.5">In:</span>
+              ${p.buyins.map((b, idx) => `<span class="px-1.5 py-0.2 rounded bg-white/5 border border-white/10 font-mono text-[10px] ${idx === 0 ? 'text-gray-300' : 'text-amber-300'}">${sym}${b}</span>`).join('')}
+            </div>
             ${p.buyins.length > 1 ? `
-              <button onclick="window.undoLastBuyin('${p.id}')" class="text-red-400 hover:text-red-300 font-medium ml-1 transition" title="Undo last rebuy">
-                Undo Rebuy
+              <button onclick="window.undoLastBuyin('${p.id}')" class="text-rose-400 hover:text-rose-300 font-semibold ml-1 transition whitespace-nowrap" title="Undo last rebuy">
+                ↩ Undo
               </button>
             ` : ''}
           </div>
@@ -1424,28 +1770,113 @@
 
     function renderSettlement() {
       const list = document.getElementById('settlementList');
+      const balanceBanner = document.getElementById('settlementBalanceBanner');
       const transactions = computeOptimalSettlement();
-      const { totalBuyins, totalCashouts, totalRake } = calculateTotals();
+      const { totalBuyins, totalCashouts, totalRake, completedCashoutsCount } = calculateTotals();
       const diff = Math.round((totalCashouts + totalRake - totalBuyins) * 100) / 100;
+      const expectedChips = Math.max(0, Math.round((totalBuyins - totalRake) * 100) / 100);
+      const totalPlayers = window.tableState.players.length;
+      const allCashedOut = totalPlayers > 0 && completedCashoutsCount === totalPlayers;
+      const sym = window.tableState.currency;
+      const mode = window.tableState.settlementMode || 'HOUSE';
 
       const modeBadge = document.getElementById('settlementModeBadge');
       const modeDesc = document.getElementById('settlementModeDesc');
+      const btnHouse = document.getElementById('modeHouseBtn');
+      const btnP2P = document.getElementById('modeP2PBtn');
 
-      if (window.tableState.rakeCollector === 'HOUSE') {
+      const activeBtnClass = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 gold-shimmer text-amber-200 shadow";
+      const inactiveBtnClass = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-gray-400 hover:text-amber-200";
+
+      if (mode === 'HOUSE') {
+        if (btnHouse) btnHouse.className = activeBtnClass;
+        if (btnP2P) btnP2P.className = inactiveBtnClass;
         if (modeBadge) {
           modeBadge.innerText = 'Central House Bank';
-          modeBadge.className = 'text-xs font-sans font-semibold text-gold-300 bg-gold-950/80 border border-gold-600/80 px-2 py-0.5 rounded-full';
+          modeBadge.className = 'text-xs font-sans font-semibold text-gold-300 bg-gold-950/80 border border-gold-600/80 px-2.5 py-0.5 rounded-full';
         }
         if (modeDesc) {
-          modeDesc.innerText = 'All players pay their losses into the House Account, and the House Account pays out all winners.';
+          modeDesc.innerText = 'All players pay their net losses into the House Account, and the House Account pays out all winners.';
         }
       } else {
+        if (btnHouse) btnHouse.className = inactiveBtnClass;
+        if (btnP2P) btnP2P.className = activeBtnClass;
         if (modeBadge) {
           modeBadge.innerText = 'Peer-to-Peer Settlement';
-          modeBadge.className = 'text-xs font-sans font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full';
+          modeBadge.className = 'text-xs font-sans font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-600/80 px-2.5 py-0.5 rounded-full';
         }
         if (modeDesc) {
           modeDesc.innerText = 'Greedy algorithm minimizes transfers so losers pay winners directly.';
+        }
+      }
+
+      // Render explicit Balance / Under-Counted / Over-Counted banner inside Who Pays Whom
+      if (balanceBanner) {
+        if (totalPlayers === 0) {
+          balanceBanner.innerHTML = '';
+        } else if (Math.abs(diff) < 0.01 && completedCashoutsCount > 0) {
+          balanceBanner.innerHTML = `
+            <div class="p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-500/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs shadow-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-300 font-bold text-base flex-shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-emerald-300 text-sm uppercase tracking-wide">Table Perfectly Balanced</span>
+                    <span class="bg-emerald-500/20 text-emerald-200 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-emerald-500/40">${sym}0.00 Discrepancy</span>
+                  </div>
+                  <p class="text-gray-300 text-[11px] mt-0.5">Counted stacks (<strong class="text-white font-mono">${sym}${totalCashouts.toFixed(2)}</strong>) + House Rake (<strong class="text-gold-300 font-mono">${sym}${totalRake.toFixed(2)}</strong>) match Total Buy-ins (<strong class="text-amber-300 font-mono">${sym}${totalBuyins.toFixed(2)}</strong>).</p>
+                </div>
+              </div>
+              <span class="text-[11px] font-semibold text-emerald-300 bg-black/40 px-2.5 py-1 rounded-lg border border-emerald-500/30 whitespace-nowrap">Ready to Settle</span>
+            </div>
+          `;
+        } else if (diff < -0.009) {
+          const missing = Math.abs(diff);
+          balanceBanner.innerHTML = `
+            <div class="p-3.5 rounded-xl ${allCashedOut ? 'bg-amber-950/50 border-amber-500/70' : 'bg-zinc-900/90 border-white/15'} border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs shadow-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg ${allCashedOut ? 'bg-amber-500/20 border-amber-400/50 text-amber-300' : 'bg-zinc-800 border-white/10 text-amber-300'} border flex items-center justify-center font-bold text-base flex-shrink-0">
+                  ${allCashedOut ? '⚠️' : '⏳'}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold ${allCashedOut ? 'text-amber-300' : 'text-amber-200'} text-sm uppercase tracking-wide">
+                      ${allCashedOut ? `Table Not Balanced • Under-Counted (-${sym}${missing.toFixed(2)})` : `Stacks Incomplete • Under-Counted (-${sym}${missing.toFixed(2)})`}
+                    </span>
+                    <span class="bg-amber-500/20 text-amber-200 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-amber-500/40">Missing Chips</span>
+                  </div>
+                  <p class="text-gray-300 text-[11px] mt-0.5">
+                    Expected <strong class="text-white font-mono">${sym}${expectedChips.toFixed(2)}</strong> in table chips, but only <strong class="text-white font-mono">${sym}${totalCashouts.toFixed(2)}</strong> is counted so far (${completedCashoutsCount}/${totalPlayers} players entered).
+                  </p>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono font-bold text-amber-300 bg-black/50 px-2.5 py-1 rounded-lg border border-amber-500/30 whitespace-nowrap">Short by ${sym}${missing.toFixed(2)}</span>
+            </div>
+          `;
+        } else if (diff > 0.009) {
+          balanceBanner.innerHTML = `
+            <div class="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs shadow-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-300 font-bold text-base flex-shrink-0">
+                  🚨
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-rose-300 text-sm uppercase tracking-wide">Table Not Balanced • Over-Counted (+${sym}${diff.toFixed(2)})</span>
+                    <span class="bg-rose-500/20 text-rose-200 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-rose-500/40">Chip Surplus</span>
+                  </div>
+                  <p class="text-rose-200/90 text-[11px] mt-0.5">
+                    Counted stacks (<strong class="text-white font-mono">${sym}${totalCashouts.toFixed(2)}</strong>) exceed expected table chips (<strong class="text-white font-mono">${sym}${expectedChips.toFixed(2)}</strong>) by <strong class="text-white font-mono">+${sym}${diff.toFixed(2)}</strong>. Check for an unlogged rebuy or miscounted stack!
+                  </p>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono font-bold text-rose-300 bg-black/50 px-2.5 py-1 rounded-lg border border-rose-500/40 whitespace-nowrap">Over by +${sym}${diff.toFixed(2)}</span>
+            </div>
+          `;
+        } else {
+          balanceBanner.innerHTML = '';
         }
       }
 
@@ -1468,16 +1899,6 @@
           </div>
         `;
         return;
-      }
-
-      if (Math.abs(diff) >= 0.01) {
-        const warning = document.createElement('div');
-        warning.className = "mb-3 p-3 rounded-lg bg-amber-950/40 border border-amber-600/40 text-amber-200 text-xs flex items-center gap-2";
-        warning.innerHTML = `
-          <span>⚠️</span>
-          <span><strong>Table Discrepancy:</strong> Off by ${window.tableState.currency}${Math.abs(diff).toFixed(2)}. Settle remaining chip stacks to ensure accurate payouts.</span>
-        `;
-        list.appendChild(warning);
       }
 
       transactions.forEach((tx) => {
@@ -1525,7 +1946,7 @@
         list.appendChild(item);
       });
 
-      if (window.tableState.rakeCollector === 'HOUSE' && (window.tableState.rakeEnabled || diff > 0.009) && (totalRake > 0 || diff > 0.009)) {
+      if (mode === 'HOUSE' && window.tableState.rakeCollector === 'HOUSE' && (window.tableState.rakeEnabled || diff > 0.009) && (totalRake > 0 || diff > 0.009)) {
         const hasSurplus = diff > 0.009;
         const adjustedRetained = Math.round((totalRake - (hasSurplus ? diff : 0)) * 100) / 100;
         const rakeSummaryBox = document.createElement('div');
@@ -1571,7 +1992,10 @@
       document.getElementById('hofBiggestLossAmt').innerText = `-${sym}${parseFloat(rec.biggestLoss.amount || 0).toFixed(2)}`;
       document.getElementById('hofBiggestLossDate').innerText = rec.biggestLoss.date ? `Recorded: ${rec.biggestLoss.date}` : 'No date recorded';
 
-      document.getElementById('allTimeGamesBadge').innerText = `${rec.totalSessions || 0} Sessions Logged`;
+      const totalSessions = rec.totalSessions || 0;
+      document.getElementById('allTimeGamesBadge').innerText = `${totalSessions} Session${totalSessions === 1 ? '' : 's'} Completed`;
+      const nextNum = document.getElementById('nextSessionNumber');
+      if (nextNum) nextNum.innerText = `#${totalSessions + 1}`;
 
       document.getElementById('hofInputBuyinAmt').value = rec.biggestBuyin.amount || 0;
       document.getElementById('hofInputBuyinDate').value = rec.biggestBuyin.date || '';
@@ -1588,14 +2012,23 @@
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const dateStr = now.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
 
+      let authorName = null;
+      if (claimedPlayerId) {
+        const claimingPlayer = window.tableState.players.find(p => p.id === claimedPlayerId);
+        if (claimingPlayer) {
+          authorName = claimingPlayer.name;
+        }
+      }
+
       const entry = {
         id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
         date: dateStr,
         time: timeStr,
         timestamp: Date.now(),
         player: playerName,
+        by: authorName,
         amount: parseFloat(amount) || 0,
-        type: type, // 'INITIAL' or 'REBUY' or 'CUSTOM'
+        type: type,
         totalAfter: parseFloat(totalAfter) || 0
       };
 
@@ -1611,12 +2044,19 @@
       if (badge) badge.innerText = hist.length;
       if (countBadge) countBadge.innerText = `${hist.length} event${hist.length === 1 ? '' : 's'}`;
 
-      let rebuysOnly = hist.filter(h => h.type !== 'INITIAL');
-      let rebuyVolume = rebuysOnly.reduce((acc, h) => acc + (parseFloat(h.amount) || 0), 0);
+      let rebuysAdded = hist.filter(h => h.type === 'REBUY');
+      let rebuysUndone = hist.filter(h => h.type === 'UNDO');
+      let netRebuyCount = Math.max(0, rebuysAdded.length - rebuysUndone.length);
+      let rebuyVolume = rebuysAdded.reduce((acc, h) => acc + (parseFloat(h.amount) || 0), 0) - rebuysUndone.reduce((acc, h) => acc + (parseFloat(h.amount) || 0), 0);
+      rebuyVolume = Math.max(0, Math.round(rebuyVolume * 100) / 100);
 
       const rebuyCountsByPlayer = {};
-      rebuysOnly.forEach(h => {
-        rebuyCountsByPlayer[h.player] = (rebuyCountsByPlayer[h.player] || 0) + 1;
+      hist.forEach(h => {
+        if (h.type === 'REBUY') {
+          rebuyCountsByPlayer[h.player] = (rebuyCountsByPlayer[h.player] || 0) + 1;
+        } else if (h.type === 'UNDO') {
+          rebuyCountsByPlayer[h.player] = Math.max(0, (rebuyCountsByPlayer[h.player] || 0) - 1);
+        }
       });
 
       let topRebuyer = '-';
@@ -1635,14 +2075,16 @@
       const statLatest = document.getElementById('statHistLatestTime');
       const statLatestDesc = document.getElementById('statHistLatestDesc');
 
-      if (statRebuys) statRebuys.innerText = rebuysOnly.length;
+      if (statRebuys) statRebuys.innerText = netRebuyCount;
       if (statVol) statVol.innerText = `${window.tableState.currency}${rebuyVolume.toFixed(2)}`;
       if (statTop) statTop.innerText = topRebuyer;
-      if (statTopSub) statTopSub.innerText = topRebuyerCount > 0 ? `${topRebuyerCount} rebuy${topRebuyerCount === 1 ? '' : 's'}` : 'No rebuys yet';
+      if (statTopSub) statTopSub.innerText = topRebuyerCount > 0 ? `${topRebuyerCount} net rebuy${topRebuyerCount === 1 ? '' : 's'}` : 'No rebuys yet';
 
       if (hist.length > 0) {
         if (statLatest) statLatest.innerText = hist[0].time;
-        if (statLatestDesc) statLatestDesc.innerText = `${hist[0].date ? hist[0].date + ' · ' : ''}${hist[0].player} (+${window.tableState.currency}${hist[0].amount})`;
+        const sign = hist[0].type === 'UNDO' ? '-' : '+';
+        const byTag = hist[0].by ? ` [by ${hist[0].by}]` : '';
+        if (statLatestDesc) statLatestDesc.innerText = `${hist[0].date ? hist[0].date + ' · ' : ''}${hist[0].player} (${sign}${window.tableState.currency}${hist[0].amount})${byTag}`;
       } else {
         if (statLatest) statLatest.innerText = '-';
         if (statLatestDesc) statLatestDesc.innerText = 'No events logged';
@@ -1656,7 +2098,7 @@
           <div class="py-12 text-center text-gray-400 bg-zinc-900/40 rounded-xl border border-dashed border-zinc-800">
             <span class="text-3xl block mb-2">📜</span>
             <p class="text-sm font-semibold text-gray-300">No Buy-ins Logged in Logbook</p>
-            <p class="text-xs text-gray-500 mt-1">When players buy in or rebuy at the table, their entries with date and exact time will appear here.</p>
+            <p class="text-xs text-gray-500 mt-1">When players buy in, rebuy (+€10 / +€20), or undo a rebuy at the table, their entries with date, author, and exact time will appear here.</p>
           </div>
         `;
         return;
@@ -1664,22 +2106,29 @@
 
       hist.forEach((entry) => {
         const isInitial = entry.type === 'INITIAL';
+        const isUndo = entry.type === 'UNDO';
         const card = document.createElement('div');
         card.className = `p-3.5 sm:p-4 rounded-xl border transition flex items-center justify-between shadow ${
-          isInitial ? 'bg-zinc-900/60 border-zinc-800' : 'bg-amber-950/20 border-amber-600/30 hover:border-amber-500/50'
+          isInitial ? 'bg-zinc-900/60 border-zinc-800' : (isUndo ? 'bg-rose-950/25 border-rose-500/35 hover:border-rose-500/55' : 'bg-amber-950/20 border-amber-600/30 hover:border-amber-500/50')
         }`;
 
         card.innerHTML = `
           <div class="flex items-center space-x-3.5 min-w-0">
-            <div class="w-9 h-9 rounded-full ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : 'bg-gold-500/20 text-gold-300 border border-gold-500/40'} flex items-center justify-center font-bold text-sm flex-shrink-0">
-              ${isInitial ? '🏁' : '🪙'}
+            <div class="w-9 h-9 rounded-full ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : (isUndo ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-gold-500/20 text-gold-300 border border-gold-500/40')} flex items-center justify-center font-bold text-sm flex-shrink-0">
+              ${isInitial ? '🏁' : (isUndo ? '↩️' : '🪙')}
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-bold text-sm text-white">${escapeHtml(entry.player)}</span>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30'}">
-                  ${isInitial ? 'Seated' : 'Rebuy'}
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isInitial ? 'bg-zinc-800 text-gray-400 border border-zinc-700' : (isUndo ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30')}">
+                  ${isInitial ? 'Seated' : (isUndo ? 'Rebuy Undone' : 'Rebuy')}
                 </span>
+                ${entry.by ? `
+                  <span class="text-[10px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm" title="Action submitted by ${escapeHtml(entry.by)}">
+                    <span>👤</span>
+                    <span>by ${escapeHtml(entry.by)}</span>
+                  </span>
+                ` : ''}
                 <span class="font-mono text-xs text-gray-400 flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/5">
                   <span class="text-gold-400/80 font-sans font-semibold">${escapeHtml(entry.date || '')}</span>
                   <span class="text-gray-500">&bull;</span>
@@ -1688,14 +2137,14 @@
                 </span>
               </div>
               <p class="text-xs text-gray-400 mt-1">
-                Total table buy-in after this: <span class="font-mono text-gray-200 font-semibold">${window.tableState.currency}${entry.totalAfter ? entry.totalAfter.toFixed(2) : entry.amount.toFixed(2)}</span>
+                Total table buy-in after this: <span class="font-mono text-gray-200 font-semibold">${window.tableState.currency}${typeof entry.totalAfter === 'number' ? entry.totalAfter.toFixed(2) : entry.amount.toFixed(2)}</span>
               </p>
             </div>
           </div>
 
           <div class="text-right flex-shrink-0 ml-3">
-            <span class="text-base sm:text-lg font-bold font-mono ${isInitial ? 'text-gray-300' : 'text-emerald-400'}">
-              +${window.tableState.currency}${entry.amount.toFixed(2)}
+            <span class="text-base sm:text-lg font-bold font-mono ${isInitial ? 'text-gray-300' : (isUndo ? 'text-rose-400' : 'text-emerald-400')}">
+              ${isUndo ? '-' : '+'}${window.tableState.currency}${entry.amount.toFixed(2)}
             </span>
           </div>
         `;
@@ -1719,6 +2168,35 @@
         renderRecordsTab();
       }
     }
+
+    window.seatRegulars = function() {
+      const defBuyin = window.tableState.defaultBuyin || 20;
+      let addedCount = 0;
+
+      REGULAR_PLAYERS.forEach(reg => {
+        const exists = window.tableState.players.some(p => p.name.toLowerCase() === reg.name.toLowerCase());
+        if (!exists) {
+          window.tableState.players.push({
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+            name: reg.name,
+            color: reg.color,
+            buyins: [defBuyin],
+            cashout: 0,
+            hasCashedOut: false
+          });
+          logBuyinEvent(reg.name, defBuyin, 'INITIAL', defBuyin);
+          addedCount++;
+        }
+      });
+
+      if (addedCount > 0) {
+        syncAllTimeRecordsFromCurrent();
+        broadcastStateChange();
+        showToast(`Seated ${addedCount} OG regular${addedCount > 1 ? 's' : ''}!`, "👥");
+      } else {
+        showToast("All 5 regulars (Maarten, Lucas, Matthieu, JJ & Nick) are already seated!", "✓");
+      }
+    };
 
     window.claimSeat = function(playerId) {
       if (claimedPlayerId === playerId) {
@@ -1748,40 +2226,53 @@
     window.promptCustomBuyin = function(playerId) {
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p) return;
-      const val = prompt(`Enter custom buy-in amount for ${p.name}:`, window.tableState.defaultBuyin || 20);
-      if (val !== null) {
-        const num = parseFloat(val);
-        if (!isNaN(num) && num > 0) {
-          p.buyins.push(num);
-          const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
-          logBuyinEvent(p.name, num, 'REBUY', totalBuy);
-          syncAllTimeRecordsFromCurrent();
-          broadcastStateChange();
-          showToast(`${p.name} added ${window.tableState.currency}${num}`, "🪙");
-        }
-      }
+      document.getElementById('customBuyinPlayerId').value = p.id;
+      document.getElementById('customBuyinPlayerName').innerText = p.name;
+      document.getElementById('customBuyinAmountInput').value = window.tableState.defaultBuyin || 20;
+      document.getElementById('customBuyinModal').classList.remove('hidden');
+      document.getElementById('customBuyinAmountInput').focus();
     };
 
     window.undoLastBuyin = function(playerId) {
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p || p.buyins.length <= 1) return;
       const removed = p.buyins.pop();
-      if (Array.isArray(window.tableState.buyinHistory)) {
-        const idx = window.tableState.buyinHistory.findIndex(h => h.player === p.name && Math.abs(h.amount - removed) < 0.01);
-        if (idx !== -1) {
-          window.tableState.buyinHistory.splice(idx, 1);
-        }
-      }
+      const totalAfter = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+      logBuyinEvent(p.name, removed, 'UNDO', totalAfter);
       broadcastStateChange();
-      showToast(`Removed last rebuy of ${window.tableState.currency}${removed} for ${p.name}`, "↩️");
+      showToast(`Logged undo of ${window.tableState.currency}${removed} rebuy for ${p.name}`, "↩️");
+    };
+
+    window.resetAllCashouts = function() {
+      askConfirmation({
+        title: 'Reset All Final Stacks?',
+        message: 'This will clear all entered end-of-night cashout amounts and put all players back into active play.',
+        icon: '🧮',
+        confirmText: 'Reset Stacks',
+        onConfirm: () => {
+          window.tableState.players.forEach(p => {
+            p.hasCashedOut = false;
+            p.cashout = 0;
+            delete p.chipCounts;
+          });
+          broadcastStateChange();
+          showToast('All final chip stacks cleared', '🔄');
+        }
+      });
     };
 
     window.clearHistoryLog = function() {
-      if (confirm("Clear buy-in logbook for this session?")) {
-        window.tableState.buyinHistory = [];
-        broadcastStateChange();
-        showToast("Logbook cleared", "🗑️");
-      }
+      askConfirmation({
+        title: 'Clear Buy-in Logbook?',
+        message: 'Are you sure you want to clear all chronological entries in the Logbook for this session?',
+        icon: '📜',
+        confirmText: 'Clear Logbook',
+        onConfirm: () => {
+          window.tableState.buyinHistory = [];
+          broadcastStateChange();
+          showToast("Logbook cleared", "🗑️");
+        }
+      });
     };
 
     window.copyHistoryLog = function() {
@@ -1791,13 +2282,16 @@
         return;
       }
 
-      let text = `📜 *POKER OG'S &bull; BUY-IN & REBUY LOGBOOK*\n`;
+      let text = `📜 *POKER OG'S • BUY-IN & REBUY LOGBOOK*\n`;
       text += `🏷️ Room: ${activeRoomCode}\n`;
       text += `📅 Export Date: ${new Date().toLocaleDateString()}\n\n`;
 
       hist.forEach((h, i) => {
         const datePart = h.date ? `${h.date} ` : '';
-        text += `${i + 1}. [${datePart}${h.time}] ${h.player}: +${window.tableState.currency}${h.amount.toFixed(2)} (${h.type === 'INITIAL' ? 'Initial Buy-in' : 'Rebuy'} | Total: ${window.tableState.currency}${h.totalAfter ? h.totalAfter.toFixed(2) : h.amount.toFixed(2)})\n`;
+        const sign = h.type === 'UNDO' ? '-' : '+';
+        const label = h.type === 'INITIAL' ? 'Initial Buy-in' : (h.type === 'UNDO' ? 'Rebuy Undone' : 'Rebuy');
+        const byPart = h.by ? ` [by ${h.by}]` : '';
+        text += `${i + 1}. [${datePart}${h.time}] ${h.player}: ${sign}${window.tableState.currency}${h.amount.toFixed(2)} (${label}${byPart} | Total: ${window.tableState.currency}${typeof h.totalAfter === 'number' ? h.totalAfter.toFixed(2) : h.amount.toFixed(2)})\n`;
       });
 
       const textarea = document.createElement("textarea");
@@ -1838,33 +2332,40 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p) return;
 
-      if (confirm(`Remove ${p.name} from the table?`)) {
-        window.tableState.players = window.tableState.players.filter(x => x.id !== playerId);
-        if (window.tableState.rakeCollector === playerId) {
-          window.tableState.rakeCollector = 'HOUSE';
+      askConfirmation({
+        title: `Remove ${p.name}?`,
+        message: `Remove ${p.name} and their buy-ins from the active table?`,
+        icon: '🗑️',
+        confirmText: 'Remove Player',
+        onConfirm: () => {
+          window.tableState.players = window.tableState.players.filter(x => x.id !== playerId);
+          if (window.tableState.rakeCollector === playerId) {
+            window.tableState.rakeCollector = 'HOUSE';
+          }
+          if (claimedPlayerId === playerId) {
+            claimedPlayerId = null;
+            localStorage.removeItem(`claimed_seat_${activeRoomCode}`);
+          }
+          broadcastStateChange();
+          showToast(`${p.name} removed`, "🗑️");
         }
-        if (claimedPlayerId === playerId) {
-          claimedPlayerId = null;
-          localStorage.removeItem(`claimed_seat_${activeRoomCode}`);
-        }
-        broadcastStateChange();
-        showToast(`${p.name} removed`, "🗑️");
-      }
+      });
     };
 
     window.openEditPlayerModal = function(playerId) {
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p) return;
 
-      document.getElementById('modalTitle').innerText = 'Edit Player';
+      document.getElementById('modalTitle').innerText = `Edit ${p.name}`;
       document.getElementById('modalPlayerId').value = p.id;
       document.getElementById('modalPlayerName').value = p.name;
+
       const buyinGroup = document.getElementById('modalBuyinGroup');
       if (buyinGroup) buyinGroup.classList.add('hidden');
       const buyinInput = document.getElementById('modalInitialBuyin');
       if (buyinInput) buyinInput.required = false;
-      document.getElementById('savePlayerSubmitBtn').innerText = 'Update Player';
 
+      document.getElementById('savePlayerSubmitBtn').innerText = 'Update Player';
       selectedColor = p.color || COLOR_PRESETS[0].hex;
       updateColorRadioDisplay(selectedColor);
 
@@ -1880,73 +2381,107 @@
       const title = document.getElementById('photoModalName');
       const img = document.getElementById('photoModalImg');
       const fallback = document.getElementById('photoModalFallback');
-
       if (!modal || !title || !img || !fallback) return;
 
       title.innerText = p.name;
       img.style.display = 'block';
       delete img.dataset.triedJpg;
-
       fallback.classList.add('hidden');
       fallback.classList.remove('flex');
-      fallback.style.backgroundColor = p.color || '#10b981';
-      fallback.innerText = p.name.charAt(0).toUpperCase();
 
       img.onerror = function() {
         if (!this.dataset.triedJpg) {
           this.dataset.triedJpg = '1';
-          this.src = encodeURIComponent(p.name) + '.jpg';
+          this.src = `${encodeURIComponent(p.name)}.jpg`;
         } else {
           this.style.display = 'none';
           fallback.classList.remove('hidden');
           fallback.classList.add('flex');
+          fallback.style.backgroundColor = p.color || '#059669';
+          fallback.innerText = p.name.charAt(0).toUpperCase();
         }
       };
 
-      img.src = encodeURIComponent(p.name) + '.JPEG';
+      img.src = `${encodeURIComponent(p.name)}.JPEG`;
+      modal.classList.remove('hidden');
+    };
+
+    window.openLogoLightbox = function() {
+      const modal = document.getElementById('photoModal');
+      const title = document.getElementById('photoModalName');
+      const img = document.getElementById('photoModalImg');
+      const fallback = document.getElementById('photoModalFallback');
+      if (!modal || !title || !img || !fallback) return;
+
+      title.innerText = "Poker OG's Emblem";
+      img.style.display = 'block';
+      fallback.classList.add('hidden');
+      fallback.classList.remove('flex');
+      img.onerror = function() {
+        this.style.display = 'none';
+        fallback.classList.remove('hidden');
+        fallback.classList.add('flex');
+        fallback.style.backgroundColor = '#06130c';
+        fallback.innerText = '♠';
+      };
+      img.src = 'logo.jpg';
       modal.classList.remove('hidden');
     };
 
     window.archiveCurrentSession = function() {
       if (window.tableState.players.length === 0) {
-        showToast("No players in session to archive", "⚠️");
+        showToast("No players in session to reset", "⚠️");
         return;
       }
 
-      const confirmArchive = confirm("Archive this game night? This will finalize all-time records (Biggest Buy-in & Biggest Loss Ever), increment total sessions played, and reset stacks to €20 for the next game.");
-      if (!confirmArchive) return;
+      askConfirmation({
+        title: 'Reset Room For Next Game?',
+        message: 'This will lock in any new all-time records, archive the completed session, reset all player stacks to the default buy-in (€' + (window.tableState.defaultBuyin || 20) + '), and prepare the room for the next game.',
+        icon: '🔄',
+        confirmText: 'Reset Room',
+        confirmStyle: 'emerald',
+        onConfirm: () => {
+          syncAllTimeRecordsFromCurrent();
+          window.tableState.allTimeRecords.totalSessions = (window.tableState.allTimeRecords.totalSessions || 0) + 1;
 
-      syncAllTimeRecordsFromCurrent();
-      window.tableState.allTimeRecords.totalSessions = (window.tableState.allTimeRecords.totalSessions || 0) + 1;
+          window.tableState.players = window.tableState.players.map(p => ({
+            ...p,
+            buyins: [window.tableState.defaultBuyin || 20],
+            cashout: 0,
+            hasCashedOut: false,
+            chipCounts: { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 }
+          }));
 
-      window.tableState.players = window.tableState.players.map(p => ({
-        ...p,
-        buyins: [window.tableState.defaultBuyin || 20],
-        cashout: 0,
-        hasCashedOut: false
-      }));
+          window.tableState.buyinHistory = [];
+          window.tableState.players.forEach(p => {
+            logBuyinEvent(p.name, window.tableState.defaultBuyin || 20, 'INITIAL', window.tableState.defaultBuyin || 20);
+          });
 
-      window.tableState.buyinHistory = [];
-      window.tableState.players.forEach(p => {
-        logBuyinEvent(p.name, window.tableState.defaultBuyin || 20, 'INITIAL', window.tableState.defaultBuyin || 20);
+          broadcastStateChange();
+          renderRecordsTab();
+          switchTab('game');
+          showToast("Room reset! Table is fresh and ready for the next game.", "♠️");
+        }
       });
-
-      broadcastStateChange();
-      renderRecordsTab();
-      showToast("Session archived! Records updated across all connected devices.", "🏆");
     };
 
     window.resetAllTimeRecords = function() {
-      if (confirm("Reset all historical records to zero? This cannot be undone.")) {
-        window.tableState.allTimeRecords = {
-          biggestBuyin: { amount: 0, date: '' },
-          biggestLoss: { amount: 0, date: '' },
-          totalSessions: 0
-        };
-        broadcastStateChange();
-        renderRecordsTab();
-        showToast("Historical records reset to zero", "🔄");
-      }
+      askConfirmation({
+        title: 'Reset All-Time Records?',
+        message: 'Reset Biggest Buy-in Ever, Biggest Loss Ever, and Total Sessions back to zero?',
+        icon: '🔄',
+        confirmText: 'Reset to Zero',
+        onConfirm: () => {
+          window.tableState.allTimeRecords = {
+            biggestBuyin: { amount: 0, date: '' },
+            biggestLoss: { amount: 0, date: '' },
+            totalSessions: 0
+          };
+          broadcastStateChange();
+          renderRecordsTab();
+          showToast("Historical records reset to zero", "🔄");
+        }
+      });
     };
 
     window.switchTab = function(tab) {
@@ -1962,20 +2497,23 @@
       if (viewHistory) viewHistory.classList.add('hidden');
       viewRecords.classList.add('hidden');
 
-      btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
-      if (btnHistory) btnHistory.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
-      btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+      const inactiveClass = "flex-1 sm:flex-none justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-400 hover:text-amber-200";
+      const activeClass = "flex-1 sm:flex-none justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 gold-shimmer text-amber-200 shadow-md";
+
+      btnGame.className = inactiveClass;
+      if (btnHistory) btnHistory.className = inactiveClass;
+      btnRecords.className = inactiveClass;
 
       if (tab === 'game') {
         viewGame.classList.remove('hidden');
-        btnGame.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        btnGame.className = activeClass;
       } else if (tab === 'history') {
         if (viewHistory) viewHistory.classList.remove('hidden');
-        if (btnHistory) btnHistory.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        if (btnHistory) btnHistory.className = activeClass;
         renderHistory();
       } else if (tab === 'records') {
         viewRecords.classList.remove('hidden');
-        btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold-500 text-black shadow";
+        btnRecords.className = activeClass;
         renderRecordsTab();
       }
     };
@@ -2004,47 +2542,50 @@
       const container = document.getElementById('chipRowsContainer');
       container.innerHTML = '';
       let runningTotal = 0;
+      let totalChipsCount = 0;
+      const sym = window.tableState.currency;
 
       CHIP_DENOMINATIONS.forEach(d => {
         const qty = activeChipCounts[d.id] || 0;
+        totalChipsCount += qty;
         const subtotal = Math.round(qty * d.val * 100) / 100;
         runningTotal += subtotal;
 
         const row = document.createElement('div');
-        row.className = "bg-felt-800/80 border border-felt-700/80 p-2.5 rounded-xl flex items-center justify-between gap-2";
+        row.className = "bg-zinc-900/90 border border-white/10 p-2.5 rounded-xl flex items-center justify-between gap-2";
         row.innerHTML = `
-          <div class="flex items-center space-x-2.5 min-w-[125px]">
-            <div class="w-8 h-8 rounded-full ${d.chipBg} border-2 flex items-center justify-center font-bold text-[10px] shadow flex-shrink-0">
-              ${window.tableState.currency}${d.val < 1 ? d.val.toFixed(2) : d.val}
-            </div>
+          <div class="flex items-center space-x-2.5 min-w-[120px]">
+            ${createCasinoChipSvg(d)}
             <div>
               <div class="text-xs font-bold text-white">${d.name}</div>
-              <div class="text-[10px] text-gray-400">${window.tableState.currency}${d.val.toFixed(2)} ea</div>
+              <div class="text-[11px] font-mono text-gray-400">${sym}${d.val.toFixed(2)}</div>
             </div>
           </div>
 
           <div class="flex items-center gap-1">
-            <button type="button" onclick="window.adjustChipCount('${d.id}', -1)" class="w-7 h-7 bg-felt-700 hover:bg-felt-600 text-gray-200 rounded font-bold text-xs flex items-center justify-center transition border border-felt-600">-</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', -1)" class="w-7 h-7 bg-zinc-800 hover:bg-zinc-700 text-gray-200 rounded-lg font-bold text-xs flex items-center justify-center transition border border-white/10">-</button>
             <input 
               type="number" 
               min="0" 
               value="${qty}" 
               onchange="window.inputChipCount('${d.id}', this.value)"
-              class="w-12 bg-felt-900 border border-felt-600 rounded text-center text-white text-xs font-mono font-bold py-1 focus:outline-none focus:ring-1 focus:ring-gold-400"
+              class="w-12 bg-black/60 border border-white/15 rounded-lg text-center text-white text-xs font-mono font-bold py-1 focus:outline-none focus:ring-1 focus:ring-gold-400"
             >
-            <button type="button" onclick="window.adjustChipCount('${d.id}', 1)" class="w-7 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-bold text-xs flex items-center justify-center transition border border-felt-600">+1</button>
-            <button type="button" onclick="window.adjustChipCount('${d.id}', 5)" class="px-1.5 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-semibold text-[11px] flex items-center justify-center transition border border-felt-600">+5</button>
-            <button type="button" onclick="window.adjustChipCount('${d.id}', 10)" class="px-1.5 h-7 bg-felt-700 hover:bg-gold-500 hover:text-black text-gray-200 rounded font-semibold text-[11px] flex items-center justify-center transition border border-felt-600">+10</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 1)" class="w-7 h-7 bg-zinc-800 hover:bg-gold-500 hover:text-black text-gray-200 rounded-lg font-bold text-xs flex items-center justify-center transition border border-white/10">+1</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 5)" class="px-2 h-7 bg-zinc-800 hover:bg-gold-500 hover:text-black text-gray-200 rounded-lg font-bold text-[11px] flex items-center justify-center transition border border-white/10">+5</button>
+            <button type="button" onclick="window.adjustChipCount('${d.id}', 10)" class="px-2 h-7 bg-zinc-800 hover:bg-gold-500 hover:text-black text-gray-200 rounded-lg font-bold text-[11px] flex items-center justify-center transition border border-white/10">+10</button>
           </div>
 
-          <div class="text-right min-w-[55px] flex-shrink-0">
-            <span class="font-mono text-xs font-bold text-gold-300">${window.tableState.currency}${subtotal.toFixed(2)}</span>
+          <div class="text-right min-w-[60px] flex-shrink-0">
+            <span class="font-mono text-xs font-extrabold text-gold-300">${sym}${subtotal.toFixed(2)}</span>
           </div>
         `;
         container.appendChild(row);
       });
 
-      document.getElementById('chipModalTotalDisplay').innerText = `${window.tableState.currency}${runningTotal.toFixed(2)}`;
+      document.getElementById('chipModalTotalDisplay').innerText = `${sym}${runningTotal.toFixed(2)}`;
+      const summaryEl = document.getElementById('chipModalCountSummary');
+      if (summaryEl) summaryEl.innerText = `${totalChipsCount} physical chip${totalChipsCount === 1 ? '' : 's'}`;
     }
 
     window.adjustChipCount = function(chipId, delta) {
@@ -2206,7 +2747,7 @@
       const perPersonRake = window.tableState.rakeEnabled ? (parseFloat(window.tableState.rakePerPerson) || 0) : 0;
       const rec = window.tableState.allTimeRecords;
 
-      let text = `♠ *POKER NIGHT LIVE LEDGER* ♠️\n`;
+      let text = `♠ *POKER OG'S • LIVE LEDGER* ♠️\n`;
       text += `🏷️ Room: ${activeRoomCode}\n`;
       text += `📅 Date: ${new Date().toLocaleDateString()}\n`;
       text += `💰 Total Buy-ins: ${window.tableState.currency}${totalBuyins.toFixed(2)}\n`;
@@ -2214,7 +2755,13 @@
       if (window.tableState.rakeEnabled) {
         text += `🏦 House Rake: ${window.tableState.currency}${totalRake.toFixed(2)} (${window.tableState.currency}${perPersonRake}/player deducted upfront from starting stack)\n`;
       }
-      text += `⚖️ Balance Status: ${Math.abs(diff) < 0.01 ? 'Balanced (Zero Discrepancy)' : `⚠ Off by ${window.tableState.currency}${diff.toFixed(2)}`}\n\n`;
+      let balanceStatusText = '✓ Perfectly Balanced (0.00 Discrepancy)';
+      if (diff < -0.009) {
+        balanceStatusText = `⚠️ NOT BALANCED • Under-Counted (-${window.tableState.currency}${Math.abs(diff).toFixed(2)} missing chips)`;
+      } else if (diff > 0.009) {
+        balanceStatusText = `🚨 NOT BALANCED • Over-Counted (+${window.tableState.currency}${diff.toFixed(2)} chip surplus)`;
+      }
+      text += `⚖️ Balance Status: ${balanceStatusText}\n\n`;
 
       text += `*PLAYER STANDINGS:*\n`;
       window.tableState.players.forEach(p => {
@@ -2232,7 +2779,8 @@
       if (transactions.length === 0) {
         text += `Everyone broke even or stacks not entered yet.\n`;
       } else {
-        if (window.tableState.rakeCollector === 'HOUSE') {
+        const mode = window.tableState.settlementMode || 'HOUSE';
+        if (mode === 'HOUSE') {
           text += `🏛️ *Centralized House Bank Settlement:*\n`;
           const intoHouse = transactions.filter(t => t.to.includes('House Account'));
           const outOfHouse = transactions.filter(t => t.from.includes('House Account'));
@@ -2260,6 +2808,7 @@
             }
           }
         } else {
+          text += `🤝 *Peer-to-Peer Settlement:*\n`;
           transactions.forEach(t => {
             text += `👉 ${t.from} pays ${t.to}: ${window.tableState.currency}${t.amount.toFixed(2)}\n`;
           });
@@ -2276,6 +2825,31 @@
     document.addEventListener('DOMContentLoaded', () => {
       initColorPicker();
       initSyncNetwork();
+
+      document.getElementById('confirmDialogAcceptBtn').addEventListener('click', () => {
+        closeModal('confirmDialogModal');
+        if (typeof pendingConfirmCallback === 'function') {
+          const cb = pendingConfirmCallback;
+          pendingConfirmCallback = null;
+          cb();
+        }
+      });
+
+      document.getElementById('customBuyinForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const playerId = document.getElementById('customBuyinPlayerId').value;
+        const val = parseFloat(document.getElementById('customBuyinAmountInput').value);
+        const p = window.tableState.players.find(x => x.id === playerId);
+        if (p && !isNaN(val) && val > 0) {
+          p.buyins.push(val);
+          const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+          logBuyinEvent(p.name, val, 'REBUY', totalBuy);
+          syncAllTimeRecordsFromCurrent();
+          broadcastStateChange();
+          closeModal('customBuyinModal');
+          showToast(`${p.name} added ${window.tableState.currency}${val}`, "🪙");
+        }
+      });
 
       document.getElementById('openShareModalBtn').addEventListener('click', () => {
         generateQrCodeForRoom();
@@ -2297,7 +2871,7 @@
         }
       });
 
-      document.getElementById('currentRoomCodeLabel').addEventListener('click', () => {
+      document.getElementById('currentRoomCodeContainer').addEventListener('click', () => {
         window.copyShareableLink();
       });
 
@@ -2427,7 +3001,7 @@
           copyBtnText.innerText = "Copied to Clipboard!";
           showToast("Summary copied for chat!", "📋");
           setTimeout(() => {
-            copyBtnText.innerText = "Copy for Chat";
+            copyBtnText.innerText = "Copy Summary for WhatsApp";
           }, 2200);
         } catch (err) {
           showToast("Failed to copy", "❌");
