@@ -854,7 +854,8 @@
     let isBroadcasting = false;
     let broadcastRetryCount = 0;
     let broadcastRetryTimeout = null;
-    let hasUnsentLocalChanges = false;
+    let localChangeGeneration = 0;
+    let lastSyncedGeneration = 0;
     let isFetchingHistory = false;
     let lastNetworkActivity = Date.now();
 
@@ -863,6 +864,7 @@
       room: activeRoomCode,
       sessionEpoch: 1,
       historyClearedAt: 0,
+      settingsRev: 1,
       settingsUpdatedAt: 1,
       recordsUpdatedAt: 1,
       currency: '€',
@@ -876,6 +878,7 @@
         buyins: [20],
         cashout: 0,
         hasCashedOut: false,
+        rev: 1,
         updatedAt: 1
       })),
       buyinHistory: [],
@@ -890,10 +893,14 @@
     };
 
     function touchPlayer(p) {
-      if (p) p.updatedAt = Date.now();
+      if (p) {
+        p.rev = (p.rev || 1) + 1;
+        p.updatedAt = Date.now();
+      }
     }
 
     function touchSettings() {
+      window.tableState.settingsRev = (window.tableState.settingsRev || 1) + 1;
       window.tableState.settingsUpdatedAt = Date.now();
     }
 
@@ -1096,6 +1103,7 @@
             if (Array.isArray(window.tableState.players)) {
               window.tableState.players.forEach(p => {
                 if (typeof p.updatedAt !== 'number') p.updatedAt = 1;
+                if (typeof p.rev !== 'number') p.rev = 1;
               });
             }
           }
@@ -1154,16 +1162,19 @@
 
       let stateChanged = false;
 
-      // 1. Merge Table Settings if remote settings are newer
+      // 1. Merge Table Settings using clock-skew-safe revision numbers (with timestamp tie-breaker)
+      const localSettingsRev = local.settingsRev || 1;
+      const remoteSettingsRev = incomingState.settingsRev || 1;
       const localSettingsTs = local.settingsUpdatedAt || 0;
       const remoteSettingsTs = incomingState.settingsUpdatedAt || incomingState.lastUpdated || 0;
-      if (remoteSettingsTs > localSettingsTs) {
+      if (remoteSettingsRev > localSettingsRev || (remoteSettingsRev === localSettingsRev && remoteSettingsTs > localSettingsTs)) {
         if (typeof incomingState.defaultBuyin !== 'undefined') local.defaultBuyin = incomingState.defaultBuyin;
         if (typeof incomingState.rakeEnabled !== 'undefined') local.rakeEnabled = incomingState.rakeEnabled;
         if (typeof incomingState.rakePerPerson !== 'undefined') local.rakePerPerson = incomingState.rakePerPerson;
         if (typeof incomingState.rakeCollector !== 'undefined') local.rakeCollector = incomingState.rakeCollector;
         if (typeof incomingState.settlementMode !== 'undefined') local.settlementMode = incomingState.settlementMode;
-        local.settingsUpdatedAt = remoteSettingsTs;
+        local.settingsRev = Math.max(localSettingsRev, remoteSettingsRev);
+        local.settingsUpdatedAt = Math.max(localSettingsTs, remoteSettingsTs);
         stateChanged = true;
       }
 
@@ -1237,11 +1248,11 @@
 
       if (historyMap.size !== (local.buyinHistory || []).length || stateChanged) {
         const mergedHistory = Array.from(historyMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        // Cap at 250 entries to keep network payloads fast and lightweight
-        local.buyinHistory = mergedHistory.slice(0, 250);
+        // Keep up to 80 recent entries so the JSON payload stays well under ntfy's 4KB inline limit
+        local.buyinHistory = mergedHistory.slice(0, 80);
       }
 
-      // 5. Merge Seated Players individually by ID and per-player updatedAt timestamp
+      // 5. Merge Seated Players individually by ID using monotonic revision counter (immune to device clock skew)
       const localPlayersMap = new Map();
       (local.players || []).forEach(p => {
         const delTs = mergedRemoved[p.id] || 0;
@@ -1263,13 +1274,26 @@
           localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
           stateChanged = true;
         } else {
+          const remRev = remP.rev || 1;
+          const locRev = locP.rev || 1;
           const locTs = locP.updatedAt || 1;
-          if (remTs > locTs) {
-            localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
-            stateChanged = true;
-          } else if (remTs === locTs && Array.isArray(remP.buyins) && Array.isArray(locP.buyins)) {
-            // Tie-breaker: if timestamps match but one has more buy-ins recorded, take the more complete array
-            if (remP.buyins.length > locP.buyins.length) {
+
+          let takeRemote = false;
+          if (remRev > locRev) {
+            takeRemote = true;
+          } else if (remRev === locRev) {
+            const remBuyLen = Array.isArray(remP.buyins) ? remP.buyins.length : 0;
+            const locBuyLen = Array.isArray(locP.buyins) ? locP.buyins.length : 0;
+            if (remBuyLen > locBuyLen) {
+              takeRemote = true;
+            } else if (remBuyLen === locBuyLen && remTs > locTs) {
+              takeRemote = true;
+            }
+          }
+
+          if (takeRemote) {
+            const existingChanged = JSON.stringify(locP) !== JSON.stringify(remP);
+            if (existingChanged) {
               localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
               stateChanged = true;
             }
@@ -1303,6 +1327,22 @@
       return `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
     }
 
+    async function extractAndApplyNtfyEvent(obj) {
+      if (!obj) return;
+      try {
+        if (obj.message && typeof obj.message === 'string' && obj.message.startsWith('{')) {
+          applyRemoteState(JSON.parse(obj.message));
+        } else if (obj.attachment && obj.attachment.url) {
+          // Fallback if payload ever exceeds 4,096 bytes and ntfy stores it as an attachment
+          const attRes = await fetch(obj.attachment.url, { cache: 'no-store' });
+          if (attRes.ok) {
+            const attJson = await attRes.json();
+            applyRemoteState(attJson);
+          }
+        }
+      } catch (e) {}
+    }
+
     async function pullRecentRoomHistory(sinceWindow = '12h') {
       if (isFetchingHistory) return;
       isFetchingHistory = true;
@@ -1313,18 +1353,16 @@
           const text = await res.text();
           if (text) {
             const lines = text.trim().split('\n');
-            lines.forEach(line => {
+            for (const line of lines) {
+              if (!line) continue;
               try {
                 const obj = JSON.parse(line);
-                let rawPayload = obj && obj.message ? obj.message : null;
-                if (rawPayload && rawPayload.startsWith('{')) {
-                  applyRemoteState(JSON.parse(rawPayload));
-                }
+                await extractAndApplyNtfyEvent(obj);
               } catch (e) {}
-            });
+            }
           }
           setSyncStatus(true, "Live Synced (Multi-Device)");
-          if (hasUnsentLocalChanges) {
+          if (localChangeGeneration > lastSyncedGeneration) {
             flushPendingBroadcast();
           }
         }
@@ -1357,10 +1395,7 @@
             lastNetworkActivity = Date.now();
             try {
               const data = JSON.parse(event.data);
-              if (data && data.message && data.message.startsWith('{')) {
-                const remoteState = JSON.parse(data.message);
-                applyRemoteState(remoteState);
-              }
+              extractAndApplyNtfyEvent(data);
             } catch (e) {}
           };
           eventSource.onerror = () => {
@@ -1380,12 +1415,12 @@
       if (icon) icon.classList.add('animate-spin');
       await pullRecentRoomHistory('12h');
       connectEventSource();
-      if (hasUnsentLocalChanges) {
-        scheduleBroadcast(true);
-      }
+      // Always push this device's merged state on manual Sync so all devices converge
+      localChangeGeneration++;
+      await flushPendingBroadcast();
       if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
       if (showFeedback) {
-        showToast("Synced with all connected devices!", "🔄");
+        showToast("Synced & reconciled with all devices!", "🔄");
       }
     };
 
@@ -1455,47 +1490,56 @@
     }
 
     async function flushPendingBroadcast() {
-      if (isBroadcasting) return;
+      if (isBroadcasting) {
+        // Another request is currently in flight; the finally block will automatically flush new generations
+        return;
+      }
       isBroadcasting = true;
+      const generationBeingSent = localChangeGeneration;
 
       const topic = getNtfyTopic();
       try {
-        const payload = JSON.stringify(window.tableState);
+        // Keep wire payload under 4,096 bytes so ntfy.sh always delivers inline JSON
+        const wireState = {
+          ...window.tableState,
+          buyinHistory: (window.tableState.buyinHistory || []).slice(0, 55)
+        };
+        const payload = JSON.stringify(wireState);
+
+        // Plain POST without custom headers avoids CORS OPTIONS preflight requests
         const resPost = await fetch(`https://ntfy.sh/${topic}`, {
           method: 'POST',
-          headers: {
-            'Title': `Poker Table ${activeRoomCode}`,
-            'Tags': 'poker'
-          },
           body: payload
         });
 
         if (resPost.ok) {
-          hasUnsentLocalChanges = false;
+          lastSyncedGeneration = Math.max(lastSyncedGeneration, generationBeingSent);
           broadcastRetryCount = 0;
           lastNetworkActivity = Date.now();
           setSyncStatus(true, "Live Synced (Multi-Device)");
         } else if (resPost.status === 429) {
           // Rate-limited: back off exponentially and re-queue without dropping the state
-          hasUnsentLocalChanges = true;
           broadcastRetryCount++;
-          const backoff = Math.min(12000, 1000 * Math.pow(1.6, broadcastRetryCount) + Math.random() * 500);
-          setSyncStatus(false, `Rate limited; retrying in ${(backoff/1000).toFixed(1)}s...`);
+          const backoff = Math.min(10000, 1000 * Math.pow(1.5, broadcastRetryCount) + Math.random() * 400);
+          setSyncStatus(false, `Syncing (${(backoff/1000).toFixed(1)}s)...`);
           if (broadcastRetryTimeout) clearTimeout(broadcastRetryTimeout);
           broadcastRetryTimeout = setTimeout(() => {
+            broadcastRetryTimeout = null;
             scheduleBroadcast(true);
           }, backoff);
         } else {
-          hasUnsentLocalChanges = true;
           setSyncStatus(false, "Sync Queued (Retrying...)");
           scheduleBroadcastRetry();
         }
       } catch (err) {
-        hasUnsentLocalChanges = true;
         setSyncStatus(false, "Local Mode (Auto-Retry Ready)");
         scheduleBroadcastRetry();
       } finally {
         isBroadcasting = false;
+        // CRITICAL: If more entries were tapped while the previous fetch was in flight, flush them now!
+        if (localChangeGeneration > lastSyncedGeneration && !broadcastRetryTimeout) {
+          scheduleBroadcast(false);
+        }
       }
     }
 
@@ -1517,19 +1561,19 @@
       if (immediate) {
         flushPendingBroadcast();
       } else {
-        // 350ms consolidation window bundles rapid taps into a single clean transmission
+        // 300ms consolidation window bundles rapid taps into a single clean transmission
         pendingBroadcastTimeout = setTimeout(() => {
           pendingBroadcastTimeout = null;
           flushPendingBroadcast();
-        }, 350);
+        }, 300);
       }
     }
 
     function broadcastStateChange() {
       const now = Date.now();
+      localChangeGeneration++;
       window.tableState.version = (window.tableState.version || 0) + 1;
       window.tableState.lastUpdated = now;
-      hasUnsentLocalChanges = true;
       saveToLocalStorage();
       renderAll();
 
@@ -2608,6 +2652,7 @@
             buyins: [defBuyin],
             cashout: 0,
             hasCashedOut: false,
+            rev: 1,
             updatedAt: Date.now()
           });
           logBuyinEvent(reg.name, defBuyin, 'INITIAL', defBuyin);
@@ -2940,6 +2985,7 @@
             cashout: 0,
             hasCashedOut: false,
             chipCounts: { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 },
+            rev: (p.rev || 1) + 1,
             updatedAt: now
           }));
 
@@ -3483,6 +3529,7 @@
             buyins: [buyin],
             cashout: 0,
             hasCashedOut: false,
+            rev: 1,
             updatedAt: Date.now()
           };
           window.tableState.players.push(newPlayer);
