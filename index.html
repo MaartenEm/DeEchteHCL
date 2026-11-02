@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <!-- QRCode generation library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- MQTT/WebSocket real-time client for high-throughput, rate-limit-free multi-device sync -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -846,6 +848,14 @@
     const deviceClientId = localStorage.getItem('poker_device_id') || ('dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7));
     try { localStorage.setItem('poker_device_id', deviceClientId); } catch (e) {}
 
+    // Public WebSocket brokers for instant, unmetered multi-device messaging
+    const WS_BROKERS = [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8884/mqtt'
+    ];
+    let currentBrokerIndex = 0;
+    let mqttClient = null;
+
     // Gateway endpoints for resilience (ntfy primary + fallback relays)
     const SYNC_GATEWAYS = [
       'https://ntfy.sh',
@@ -1133,12 +1143,12 @@
           : "inline-block w-2 h-2 rounded-full bg-amber-400";
       }
       if (roleBadge) {
-        roleBadge.innerText = isLive ? "LIVE SYNC" : "LOCAL";
+        roleBadge.innerText = isLive ? "LIVE SYNC" : "CONNECTING";
         roleBadge.className = isLive 
           ? "text-[10px] tracking-wider font-sans font-extrabold bg-emerald-950/80 border border-emerald-500 text-emerald-300 px-2 py-0.5 rounded-full uppercase" 
           : "text-[10px] tracking-wider font-sans font-extrabold bg-zinc-800 border border-zinc-700 text-amber-300 px-2 py-0.5 rounded-full uppercase";
       }
-      if (footerMode) footerMode.innerText = isLive ? "Cloud Live Sync Active" : "Local Mode (Offline Safe)";
+      if (footerMode) footerMode.innerText = isLive ? "Real-Time WebSocket & Mesh Active" : "Connecting to Table Network...";
       if (footerPeers) footerPeers.innerText = `Room: ${activeRoomCode}`;
     }
 
@@ -1343,13 +1353,67 @@
       currentGatewayIndex = (currentGatewayIndex + 1) % SYNC_GATEWAYS.length;
     }
 
+    // High-performance real-time WebSocket connection
+    function connectWebSocket() {
+      if (typeof mqtt === 'undefined') return;
+      if (mqttClient) {
+        try { mqttClient.end(true); } catch (e) {}
+        mqttClient = null;
+      }
+
+      const brokerUrl = WS_BROKERS[currentBrokerIndex % WS_BROKERS.length];
+      const topic = `pokerog/${activeRoomCode.toLowerCase()}/state`;
+
+      try {
+        mqttClient = mqtt.connect(brokerUrl, {
+          clientId: `poker_${deviceClientId}_${Math.random().toString(36).slice(2, 6)}`,
+          clean: true,
+          connectTimeout: 5000,
+          reconnectPeriod: 3000
+        });
+
+        mqttClient.on('connect', () => {
+          consecutiveNetworkErrors = 0;
+          lastNetworkActivity = Date.now();
+          setSyncStatus(true, "Live Synced (Real-Time)");
+          mqttClient.subscribe(topic, { qos: 0 });
+          // If we have local unsynced changes, push them immediately
+          if (localChangeGeneration > lastSyncedGeneration) {
+            flushPendingBroadcast();
+          }
+        });
+
+        mqttClient.on('message', (t, message) => {
+          if (t === topic) {
+            lastNetworkActivity = Date.now();
+            try {
+              const str = message.toString();
+              const parsed = JSON.parse(str);
+              if (parsed && parsed.senderId !== deviceClientId) {
+                applyRemoteState(parsed.payload || parsed);
+              }
+            } catch (err) {}
+          }
+        });
+
+        mqttClient.on('error', () => {
+          currentBrokerIndex = (currentBrokerIndex + 1) % WS_BROKERS.length;
+        });
+
+        mqttClient.on('close', () => {
+          // Reconnect logic is handled by mqtt client
+        });
+      } catch (e) {
+        currentBrokerIndex = (currentBrokerIndex + 1) % WS_BROKERS.length;
+      }
+    }
+
     async function extractAndApplyNtfyEvent(obj) {
       if (!obj) return;
       try {
         if (obj.message && typeof obj.message === 'string' && obj.message.startsWith('{')) {
           applyRemoteState(JSON.parse(obj.message));
         } else if (obj.attachment && obj.attachment.url) {
-          // Fallback if payload ever exceeds 4,096 bytes and ntfy stores it as an attachment
           const attRes = await fetch(obj.attachment.url, { cache: 'no-store' });
           if (attRes.ok) {
             const attJson = await attRes.json();
@@ -1385,14 +1449,15 @@
             flushPendingBroadcast();
           }
         } else if (res.status === 429) {
-          // If rate limited, rotate gateway on next attempt
           rotateGateway();
         }
       } catch (e) {
         consecutiveNetworkErrors++;
-        // Only show offline if consecutive failures persist and SSE is inactive
-        if (consecutiveNetworkErrors >= 3 && (!eventSource || eventSource.readyState !== 1)) {
-          setSyncStatus(false, "Local Mode (Auto-Reconnecting)");
+        // If WebSocket is active, we are still 100% online
+        if (mqttClient && mqttClient.connected) {
+          setSyncStatus(true, "Live Synced (WebSocket)");
+        } else if (consecutiveNetworkErrors >= 4) {
+          setSyncStatus(false, "Connecting Table Network...");
         }
       } finally {
         isFetchingHistory = false;
@@ -1432,7 +1497,7 @@
             eventSource = null;
             consecutiveNetworkErrors++;
             rotateGateway();
-            const delay = Math.min(8000, 1500 + (Math.random() * 2000));
+            const delay = Math.min(8000, 2000 + (Math.random() * 2000));
             sseReconnectTimeout = setTimeout(() => {
               connectEventSource();
             }, delay);
@@ -1445,14 +1510,14 @@
       const icon = document.getElementById('forceSyncIcon');
       if (icon) icon.classList.add('animate-spin');
       consecutiveNetworkErrors = 0;
+      connectWebSocket();
       connectEventSource();
       await pullRecentRoomHistory('12h');
-      // Always push this device's merged state on manual Sync so all devices converge
       localChangeGeneration++;
       await flushPendingBroadcast();
       if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
       if (showFeedback) {
-        showToast("Synced & reconnected with all devices!", "🔄");
+        showToast("Synced with all devices!", "🔄");
       }
     };
 
@@ -1482,14 +1547,20 @@
         }
       });
 
-      // Initial pull of room history + real-time SSE + continuous fallback polling
+      // Start Real-Time WebSocket Channel (bypasses HTTP rate limits completely)
+      connectWebSocket();
+
+      // Supplementary SSE + Initial History Pull
       pullRecentRoomHistory('12h');
       connectEventSource();
       startHttpPolling();
 
-      // Instant recovery when mobile phone screen unlocks or user switches back to browser tab
+      // Mobile sleep wake-up recovery
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
+          if (!mqttClient || !mqttClient.connected) {
+            connectWebSocket();
+          }
           pullRecentRoomHistory('30m');
           if (!eventSource || eventSource.readyState === 2) {
             connectEventSource();
@@ -1498,14 +1569,15 @@
       });
 
       window.addEventListener('focus', () => {
-        pullRecentRoomHistory('10m');
-        if (!eventSource || eventSource.readyState === 2) {
-          connectEventSource();
+        if (!mqttClient || !mqttClient.connected) {
+          connectWebSocket();
         }
+        pullRecentRoomHistory('10m');
       });
 
       window.addEventListener('online', () => {
         consecutiveNetworkErrors = 0;
+        connectWebSocket();
         pullRecentRoomHistory('1h');
         connectEventSource();
       });
@@ -1513,43 +1585,54 @@
 
     function startHttpPolling() {
       if (pollInterval) clearInterval(pollInterval);
-      // Lightweight watchdog that only polls if SSE stream is quiet
       pollInterval = setInterval(() => {
         if (document.visibilityState === 'hidden') return;
         const now = Date.now();
-        // If no message or event received in 20s, reconnect SSE and pull
-        if (now - lastNetworkActivity > 20000) {
+        // If WebSocket is alive, we don't need aggressive HTTP polling
+        if (mqttClient && mqttClient.connected) {
+          return;
+        }
+        if (now - lastNetworkActivity > 18000) {
+          connectWebSocket();
           connectEventSource();
           pullRecentRoomHistory('45s');
-        } else if (now - lastNetworkActivity > 10000) {
-          // Subtle background catch-up
-          pullRecentRoomHistory('20s');
         }
-      }, 8000);
+      }, 7000);
     }
 
     async function flushPendingBroadcast() {
-      if (isBroadcasting) {
-        // Another request is currently in flight; the finally block will automatically flush new generations
-        return;
-      }
+      if (isBroadcasting) return;
       isBroadcasting = true;
       const generationBeingSent = localChangeGeneration;
 
+      const wireState = {
+        ...window.tableState,
+        buyinHistory: (window.tableState.buyinHistory || []).slice(0, 55)
+      };
+      const jsonStr = JSON.stringify(wireState);
+
+      // 1. Instant WebSocket broadcast (instant, bypasses rate limits)
+      let wsDelivered = false;
+      if (mqttClient && mqttClient.connected) {
+        try {
+          const wsPayload = JSON.stringify({
+            senderId: deviceClientId,
+            payload: wireState
+          });
+          mqttClient.publish(`pokerog/${activeRoomCode.toLowerCase()}/state`, wsPayload, { qos: 0 });
+          wsDelivered = true;
+          lastSyncedGeneration = Math.max(lastSyncedGeneration, generationBeingSent);
+          setSyncStatus(true, "Live Synced (Real-Time)");
+        } catch (e) {}
+      }
+
+      // 2. HTTP push for persistent catch-up across late arrivals
       const topic = getNtfyTopic();
       const gateway = getCurrentGateway();
       try {
-        // Keep wire payload under 4,096 bytes so ntfy always delivers inline JSON
-        const wireState = {
-          ...window.tableState,
-          buyinHistory: (window.tableState.buyinHistory || []).slice(0, 55)
-        };
-        const payload = JSON.stringify(wireState);
-
-        // Plain POST without custom headers avoids CORS OPTIONS preflight requests
         const resPost = await fetch(`${gateway}/${topic}`, {
           method: 'POST',
-          body: payload
+          body: jsonStr
         });
 
         if (resPost.ok) {
@@ -1559,26 +1642,25 @@
           lastNetworkActivity = Date.now();
           setSyncStatus(true, "Live Synced (Multi-Device)");
         } else if (resPost.status === 429) {
-          // Rate-limited: rotate gateway and back off with jitter
           rotateGateway();
-          broadcastRetryCount++;
-          const backoff = Math.min(8000, 800 * Math.pow(1.4, broadcastRetryCount) + Math.random() * 300);
-          setSyncStatus(false, `Re-syncing (${(backoff/1000).toFixed(1)}s)...`);
-          if (broadcastRetryTimeout) clearTimeout(broadcastRetryTimeout);
-          broadcastRetryTimeout = setTimeout(() => {
-            broadcastRetryTimeout = null;
-            scheduleBroadcast(true);
-          }, backoff);
-        } else {
-          scheduleBroadcastRetry();
+          if (!wsDelivered) {
+            broadcastRetryCount++;
+            const backoff = Math.min(8000, 800 * Math.pow(1.3, broadcastRetryCount) + Math.random() * 200);
+            if (broadcastRetryTimeout) clearTimeout(broadcastRetryTimeout);
+            broadcastRetryTimeout = setTimeout(() => {
+              broadcastRetryTimeout = null;
+              scheduleBroadcast(true);
+            }, backoff);
+          }
         }
       } catch (err) {
-        consecutiveNetworkErrors++;
-        rotateGateway();
-        scheduleBroadcastRetry();
+        if (!wsDelivered) {
+          consecutiveNetworkErrors++;
+          rotateGateway();
+          scheduleBroadcastRetry();
+        }
       } finally {
         isBroadcasting = false;
-        // CRITICAL: If more entries were tapped while the previous fetch was in flight, flush them now!
         if (localChangeGeneration > lastSyncedGeneration && !broadcastRetryTimeout) {
           scheduleBroadcast(false);
         }
