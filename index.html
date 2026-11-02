@@ -158,6 +158,10 @@
             <svg class="w-3 h-3 text-gray-500 group-hover:text-gold-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
           </div>
         </div>
+        <button id="forceSyncBtn" onclick="window.forceSyncNow(true)" class="px-2.5 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 rounded-lg text-xs font-semibold text-amber-300 flex items-center gap-1 transition" title="Force pull & push latest state across all devices">
+          <svg id="forceSyncIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span class="hidden md:inline">Sync</span>
+        </button>
         <button id="openShareModalBtn" class="px-2.5 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 rounded-lg text-xs font-semibold text-emerald-300 flex items-center gap-1.5 transition" title="Show QR Code & Invite Link">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
           <span class="hidden sm:inline">QR Invite</span>
@@ -838,14 +842,25 @@
     let currentTab = 'game';
     let selectedColor = COLOR_PRESETS[0].hex;
 
-    // Cross-tab and HTTP Server-Sent Event / Polling State
+    // Unique Device ID & Multi-Device Sync State
+    const deviceClientId = localStorage.getItem('poker_device_id') || ('dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7));
+    try { localStorage.setItem('poker_device_id', deviceClientId); } catch (e) {}
+
     let localChannel = null;
     let eventSource = null;
     let pollInterval = null;
+    let sseReconnectTimeout = null;
+    let pendingBroadcastTimeout = null;
+    let hasUnsentLocalChanges = false;
+    let isFetchingHistory = false;
 
     // Application state with the 5 regular players: Maarten, Lucas, Matthieu, JJ, and Nick
     window.tableState = {
       room: activeRoomCode,
+      sessionEpoch: 1,
+      historyClearedAt: 0,
+      settingsUpdatedAt: 1,
+      recordsUpdatedAt: 1,
       currency: '€',
       defaultBuyin: 20,
       rakeEnabled: true,
@@ -856,17 +871,27 @@
         ...p,
         buyins: [20],
         cashout: 0,
-        hasCashedOut: false
+        hasCashedOut: false,
+        updatedAt: 1
       })),
       buyinHistory: [],
+      removedPlayers: {},
       allTimeRecords: {
         biggestBuyin: { amount: 60, date: 'Oct 2026' },
         biggestLoss: { amount: 41, date: 'Sep 2026' },
         totalSessions: 3
       },
       version: 1,
-      lastUpdated: Date.now()
+      lastUpdated: 1
     };
+
+    function touchPlayer(p) {
+      if (p) p.updatedAt = Date.now();
+    }
+
+    function touchSettings() {
+      window.tableState.settingsUpdatedAt = Date.now();
+    }
 
     function askConfirmation({ title, message, icon = '⚠️', confirmText = 'Confirm', confirmStyle = 'rose', onConfirm }) {
       document.getElementById('confirmDialogTitle').innerText = title || 'Confirm Action';
@@ -1040,6 +1065,7 @@
 
     window.setSettlementMode = function(mode) {
       window.tableState.settlementMode = mode;
+      touchSettings();
       broadcastStateChange();
       showToast(mode === 'HOUSE' ? 'Switched to Central House Bank' : 'Switched to Peer-to-Peer Settlement', mode === 'HOUSE' ? '🏦' : '🤝');
     };
@@ -1059,6 +1085,14 @@
             window.tableState = { ...window.tableState, ...parsed };
             if (!Array.isArray(window.tableState.buyinHistory)) {
               window.tableState.buyinHistory = [];
+            }
+            if (!window.tableState.removedPlayers || typeof window.tableState.removedPlayers !== 'object') {
+              window.tableState.removedPlayers = {};
+            }
+            if (Array.isArray(window.tableState.players)) {
+              window.tableState.players.forEach(p => {
+                if (typeof p.updatedAt !== 'number') p.updatedAt = 1;
+              });
             }
           }
         }
@@ -1088,22 +1122,265 @@
       if (footerPeers) footerPeers.innerText = `Room: ${activeRoomCode}`;
     }
 
+    // Deterministic Conflict-Free Merger across multiple devices
     function applyRemoteState(incomingState) {
-      if (!incomingState || typeof incomingState !== 'object') return;
-      if (incomingState.room && incomingState.room !== activeRoomCode) return;
+      if (!incomingState || typeof incomingState !== 'object') return false;
+      if (incomingState.room && incomingState.room !== activeRoomCode) return false;
 
-      const currentVer = window.tableState.version || 0;
-      const incomingVer = incomingState.version || 0;
+      const local = window.tableState;
+      const localEpoch = local.sessionEpoch || 1;
+      const remoteEpoch = incomingState.sessionEpoch || 1;
 
-      if (incomingVer > currentVer || (incomingVer === currentVer && (incomingState.lastUpdated || 0) > (window.tableState.lastUpdated || 0))) {
+      // Ignore states from an older reset session
+      if (remoteEpoch < localEpoch) {
+        return false;
+      }
+
+      // If remote device triggered a New Game Reset (higher sessionEpoch), adopt the reset cleanly
+      if (remoteEpoch > localEpoch) {
         window.tableState = {
-          ...window.tableState,
-          ...incomingState
+          ...local,
+          ...incomingState,
+          removedPlayers: incomingState.removedPlayers || {}
         };
         saveToLocalStorage();
         renderAll();
+        return true;
+      }
+
+      let stateChanged = false;
+
+      // 1. Merge Table Settings if remote settings are newer
+      const localSettingsTs = local.settingsUpdatedAt || 0;
+      const remoteSettingsTs = incomingState.settingsUpdatedAt || incomingState.lastUpdated || 0;
+      if (remoteSettingsTs > localSettingsTs) {
+        if (typeof incomingState.defaultBuyin !== 'undefined') local.defaultBuyin = incomingState.defaultBuyin;
+        if (typeof incomingState.rakeEnabled !== 'undefined') local.rakeEnabled = incomingState.rakeEnabled;
+        if (typeof incomingState.rakePerPerson !== 'undefined') local.rakePerPerson = incomingState.rakePerPerson;
+        if (typeof incomingState.rakeCollector !== 'undefined') local.rakeCollector = incomingState.rakeCollector;
+        if (typeof incomingState.settlementMode !== 'undefined') local.settlementMode = incomingState.settlementMode;
+        local.settingsUpdatedAt = remoteSettingsTs;
+        stateChanged = true;
+      }
+
+      // 2. Merge All-Time Records (always keep highest records & session count)
+      if (incomingState.allTimeRecords) {
+        if (!local.allTimeRecords) {
+          local.allTimeRecords = incomingState.allTimeRecords;
+          stateChanged = true;
+        } else {
+          const remRec = incomingState.allTimeRecords;
+          const locRec = local.allTimeRecords;
+          const remRecTs = incomingState.recordsUpdatedAt || 0;
+          const locRecTs = local.recordsUpdatedAt || 0;
+
+          if (remRecTs > locRecTs) {
+            local.allTimeRecords = JSON.parse(JSON.stringify(remRec));
+            local.recordsUpdatedAt = remRecTs;
+            stateChanged = true;
+          } else {
+            if ((parseFloat(remRec.biggestBuyin?.amount) || 0) > (parseFloat(locRec.biggestBuyin?.amount) || 0)) {
+              locRec.biggestBuyin = { ...remRec.biggestBuyin };
+              stateChanged = true;
+            }
+            if ((parseFloat(remRec.biggestLoss?.amount) || 0) > (parseFloat(locRec.biggestLoss?.amount) || 0)) {
+              locRec.biggestLoss = { ...remRec.biggestLoss };
+              stateChanged = true;
+            }
+            if ((remRec.totalSessions || 0) > (locRec.totalSessions || 0)) {
+              locRec.totalSessions = remRec.totalSessions;
+              stateChanged = true;
+            }
+          }
+        }
+      }
+
+      // 3. Merge Removed Players Tombstones
+      const mergedRemoved = { ...(local.removedPlayers || {}) };
+      if (incomingState.removedPlayers && typeof incomingState.removedPlayers === 'object') {
+        for (const [pid, delTs] of Object.entries(incomingState.removedPlayers)) {
+          if (!mergedRemoved[pid] || delTs > mergedRemoved[pid]) {
+            mergedRemoved[pid] = delTs;
+            stateChanged = true;
+          }
+        }
+      }
+      local.removedPlayers = mergedRemoved;
+
+      // 4. Merge Logbook Entries by unique ID (so no log ever disappears!)
+      const mergedClearedAt = Math.max(local.historyClearedAt || 0, incomingState.historyClearedAt || 0);
+      if (mergedClearedAt > (local.historyClearedAt || 0)) {
+        local.historyClearedAt = mergedClearedAt;
+        stateChanged = true;
+      }
+
+      const historyMap = new Map();
+      (local.buyinHistory || []).forEach(entry => {
+        if (entry && entry.id && (entry.timestamp || 0) > mergedClearedAt) {
+          historyMap.set(entry.id, entry);
+        }
+      });
+
+      const prevHistorySize = historyMap.size;
+      (incomingState.buyinHistory || []).forEach(entry => {
+        if (entry && entry.id && (entry.timestamp || 0) > mergedClearedAt) {
+          if (!historyMap.has(entry.id)) {
+            historyMap.set(entry.id, entry);
+            stateChanged = true;
+          }
+        }
+      });
+
+      if (historyMap.size !== (local.buyinHistory || []).length || stateChanged) {
+        const mergedHistory = Array.from(historyMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        // Cap at 250 entries to keep network payloads fast and lightweight
+        local.buyinHistory = mergedHistory.slice(0, 250);
+      }
+
+      // 5. Merge Seated Players individually by ID and per-player updatedAt timestamp
+      const localPlayersMap = new Map();
+      (local.players || []).forEach(p => {
+        const delTs = mergedRemoved[p.id] || 0;
+        if ((p.updatedAt || 1) >= delTs) {
+          localPlayersMap.set(p.id, p);
+        } else {
+          stateChanged = true;
+        }
+      });
+
+      (incomingState.players || []).forEach(remP => {
+        if (!remP || !remP.id) return;
+        const delTs = mergedRemoved[remP.id] || 0;
+        const remTs = remP.updatedAt || incomingState.lastUpdated || 1;
+        if (remTs < delTs) return; // Player was deleted more recently
+
+        const locP = localPlayersMap.get(remP.id);
+        if (!locP) {
+          localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
+          stateChanged = true;
+        } else {
+          const locTs = locP.updatedAt || 1;
+          if (remTs > locTs) {
+            localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
+            stateChanged = true;
+          } else if (remTs === locTs && Array.isArray(remP.buyins) && Array.isArray(locP.buyins)) {
+            // Tie-breaker: if timestamps match but one has more buy-ins recorded, take the more complete array
+            if (remP.buyins.length > locP.buyins.length) {
+              localPlayersMap.set(remP.id, JSON.parse(JSON.stringify(remP)));
+              stateChanged = true;
+            }
+          }
+        }
+      });
+
+      const mergedPlayersList = Array.from(localPlayersMap.values());
+      if (mergedPlayersList.length !== (local.players || []).length) {
+        stateChanged = true;
+      }
+      local.players = mergedPlayersList;
+
+      // Update version and timestamp watermarks
+      const maxVer = Math.max(local.version || 1, incomingState.version || 1);
+      const maxUpdated = Math.max(local.lastUpdated || 1, incomingState.lastUpdated || 1);
+      if (maxVer !== local.version || maxUpdated !== local.lastUpdated) {
+        local.version = maxVer;
+        local.lastUpdated = maxUpdated;
+      }
+
+      if (stateChanged) {
+        syncAllTimeRecordsFromCurrent();
+        saveToLocalStorage();
+        renderAll();
+      }
+      return stateChanged;
+    }
+
+    function getNtfyTopic() {
+      return `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
+    }
+
+    async function pullRecentRoomHistory(sinceWindow = '12h') {
+      if (isFetchingHistory) return;
+      isFetchingHistory = true;
+      const topic = getNtfyTopic();
+      try {
+        const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=${sinceWindow}`, { cache: 'no-store' });
+        if (res.ok) {
+          const text = await res.text();
+          if (text) {
+            const lines = text.trim().split('\n');
+            lines.forEach(line => {
+              try {
+                const obj = JSON.parse(line);
+                let rawPayload = obj && obj.message ? obj.message : null;
+                if (rawPayload && rawPayload.startsWith('{')) {
+                  applyRemoteState(JSON.parse(rawPayload));
+                }
+              } catch (e) {}
+            });
+          }
+          setSyncStatus(true, "Live Synced (Multi-Device)");
+          if (hasUnsentLocalChanges) {
+            flushPendingBroadcast();
+          }
+        }
+      } catch (e) {
+        setSyncStatus(false, "Local Mode (Offline Safe)");
+      } finally {
+        isFetchingHistory = false;
       }
     }
+
+    function connectEventSource() {
+      const topic = getNtfyTopic();
+      if (eventSource) {
+        try { eventSource.close(); } catch (e) {}
+        eventSource = null;
+      }
+      if (sseReconnectTimeout) {
+        clearTimeout(sseReconnectTimeout);
+        sseReconnectTimeout = null;
+      }
+
+      try {
+        if (typeof EventSource !== 'undefined') {
+          eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+          eventSource.onopen = () => {
+            setSyncStatus(true, "Live Synced (Multi-Device)");
+          };
+          eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data && data.message && data.message.startsWith('{')) {
+                const remoteState = JSON.parse(data.message);
+                applyRemoteState(remoteState);
+              }
+            } catch (e) {}
+          };
+          eventSource.onerror = () => {
+            try { eventSource.close(); } catch (e) {}
+            eventSource = null;
+            sseReconnectTimeout = setTimeout(() => {
+              connectEventSource();
+            }, 6000);
+          };
+        }
+      } catch (e) {}
+    }
+
+    window.forceSyncNow = async function(showFeedback = false) {
+      const icon = document.getElementById('forceSyncIcon');
+      if (icon) icon.classList.add('animate-spin');
+      await pullRecentRoomHistory('12h');
+      connectEventSource();
+      if (hasUnsentLocalChanges) {
+        await flushPendingBroadcast();
+      }
+      if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
+      if (showFeedback) {
+        showToast("Synced with all connected devices!", "🔄");
+      }
+    };
 
     function initSyncNetwork() {
       loadFromLocalStorage();
@@ -1131,85 +1408,87 @@
         }
       });
 
-      const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
-      
-      fetch(`https://ntfy.sh/${topic}/json?poll=1&since=12h`, { cache: 'no-store' })
-        .then(res => res.text())
-        .then(text => {
-          if (!text) return;
-          const lines = text.trim().split('\n');
-          lines.forEach(line => {
-            try {
-              const obj = JSON.parse(line);
-              if (obj && obj.message) {
-                const parsedState = JSON.parse(obj.message);
-                applyRemoteState(parsedState);
-              }
-            } catch(e) {}
-          });
-          setSyncStatus(true, "Connected to Table");
-        })
-        .catch(() => {
-          setSyncStatus(false, "Local Mode (Ready)");
-        });
+      // Initial pull of room history + real-time SSE + continuous fallback polling
+      pullRecentRoomHistory('12h');
+      connectEventSource();
+      startHttpPolling();
+
+      // Instant recovery when mobile phone screen unlocks or user switches back to browser tab
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          pullRecentRoomHistory('30m');
+          if (!eventSource || eventSource.readyState === 2) {
+            connectEventSource();
+          }
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        pullRecentRoomHistory('10m');
+      });
+
+      window.addEventListener('online', () => {
+        pullRecentRoomHistory('1h');
+        connectEventSource();
+      });
+    }
+
+    function startHttpPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      // Always run a lightweight 6-second catch-up poll so phones that silently drop SSE never get stuck
+      pollInterval = setInterval(() => {
+        if (document.visibilityState === 'hidden') return;
+        pullRecentRoomHistory('20s');
+      }, 6000);
+    }
+
+    async function flushPendingBroadcast() {
+      const topic = getNtfyTopic();
+      try {
+        // Pull very recent messages (last 10s) right before pushing so we never overwrite a simultaneous edit
+        const resCheck = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=10s`, { cache: 'no-store' });
+        if (resCheck.ok) {
+          const text = await resCheck.text();
+          if (text) {
+            text.trim().split('\n').forEach(line => {
+              try {
+                const obj = JSON.parse(line);
+                if (obj && obj.message && obj.message.startsWith('{')) {
+                  applyRemoteState(JSON.parse(obj.message));
+                }
+              } catch (e) {}
+            });
+          }
+        }
+      } catch (e) {}
 
       try {
-        if (typeof EventSource !== 'undefined') {
-          eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
-          eventSource.onopen = () => {
-            setSyncStatus(true, "Live Synced (Multi-Device)");
-          };
-          eventSource.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data && data.message) {
-                const remoteState = JSON.parse(data.message);
-                applyRemoteState(remoteState);
-              }
-            } catch(e) {}
-          };
-          eventSource.onerror = () => {
-            if (!pollInterval) {
-              startHttpPolling(topic);
-            }
-          };
+        const resPost = await fetch(`https://ntfy.sh/${topic}`, {
+          method: 'POST',
+          headers: {
+            'Title': `Poker Table ${activeRoomCode}`,
+            'Tags': 'poker'
+          },
+          body: JSON.stringify(window.tableState)
+        });
+        if (resPost.ok) {
+          hasUnsentLocalChanges = false;
+          setSyncStatus(true, "Live Synced (Multi-Device)");
         } else {
-          startHttpPolling(topic);
+          hasUnsentLocalChanges = true;
+          setSyncStatus(false, "Sync Queued (Retrying...)");
         }
-      } catch(e) {
-        startHttpPolling(topic);
+      } catch (err) {
+        hasUnsentLocalChanges = true;
+        setSyncStatus(false, "Local Mode (Auto-Retry Ready)");
       }
     }
 
-    function startHttpPolling(topic) {
-      if (pollInterval) return;
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=8s`, { cache: 'no-store' });
-          if (res.ok) {
-            const text = await res.text();
-            if (text) {
-              const lines = text.trim().split('\n');
-              lines.forEach(line => {
-                try {
-                  const obj = JSON.parse(line);
-                  if (obj && obj.message) {
-                    applyRemoteState(JSON.parse(obj.message));
-                  }
-                } catch(e) {}
-              });
-            }
-            setSyncStatus(true, "Live Synced (HTTP)");
-          }
-        } catch(e) {
-          setSyncStatus(false, "Local Mode (Offline Safe)");
-        }
-      }, 4000);
-    }
-
-    async function broadcastStateChange() {
+    function broadcastStateChange() {
+      const now = Date.now();
       window.tableState.version = (window.tableState.version || 0) + 1;
-      window.tableState.lastUpdated = Date.now();
+      window.tableState.lastUpdated = now;
+      hasUnsentLocalChanges = true;
       saveToLocalStorage();
       renderAll();
 
@@ -1219,20 +1498,12 @@
         } catch (e) {}
       }
 
-      const topic = `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
-      try {
-        await fetch(`https://ntfy.sh/${topic}`, {
-          method: 'POST',
-          headers: {
-            'Title': `Poker Table ${activeRoomCode}`,
-            'Tags': 'poker'
-          },
-          body: JSON.stringify(window.tableState)
-        });
-        setSyncStatus(true, "Live Synced (Multi-Device)");
-      } catch (err) {
-        console.log("Local offline saved", err);
+      if (pendingBroadcastTimeout) {
+        clearTimeout(pendingBroadcastTimeout);
       }
+      pendingBroadcastTimeout = setTimeout(() => {
+        flushPendingBroadcast();
+      }, 120);
     }
 
     function calculateTotals() {
@@ -1574,7 +1845,14 @@
       const totalRakePool = window.tableState.players.length * perPersonRake;
       const sym = window.tableState.currency;
 
-      window.tableState.players.forEach((p) => {
+      // Sort a shallow copy for rendering so the claimed player appears first on this device
+      const orderedPlayers = [...window.tableState.players].sort((a, b) => {
+        if (a.id === claimedPlayerId) return -1;
+        if (b.id === claimedPlayerId) return 1;
+        return 0;
+      });
+
+      orderedPlayers.forEach((p) => {
         const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
         const roundedNet = getPlayerNet(p);
         const rebuysCount = p.buyins.length > 1 ? p.buyins.length - 1 : 0;
@@ -2283,13 +2561,18 @@
       REGULAR_PLAYERS.forEach(reg => {
         const exists = window.tableState.players.some(p => p.name.toLowerCase() === reg.name.toLowerCase());
         if (!exists) {
+          const newId = Date.now().toString() + Math.random().toString(36).substring(2, 5);
+          if (window.tableState.removedPlayers) {
+            delete window.tableState.removedPlayers[newId];
+          }
           window.tableState.players.push({
-            id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+            id: newId,
             name: reg.name,
             color: reg.color,
             buyins: [defBuyin],
             cashout: 0,
-            hasCashedOut: false
+            hasCashedOut: false,
+            updatedAt: Date.now()
           });
           logBuyinEvent(reg.name, defBuyin, 'INITIAL', defBuyin);
           addedCount++;
@@ -2325,6 +2608,7 @@
 
       const wasBusted = p.hasCashedOut && (parseFloat(p.cashout) || 0) === 0;
       p.buyins.push(amount);
+      touchPlayer(p);
       const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
 
       if (wasBusted) {
@@ -2354,6 +2638,7 @@
       const p = window.tableState.players.find(x => x.id === playerId);
       if (!p || p.buyins.length <= 1) return;
       const removed = p.buyins.pop();
+      touchPlayer(p);
       const totalAfter = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
       logBuyinEvent(p.name, removed, 'UNDO', totalAfter);
       broadcastStateChange();
@@ -2371,6 +2656,7 @@
             p.hasCashedOut = false;
             p.cashout = 0;
             delete p.chipCounts;
+            touchPlayer(p);
           });
           broadcastStateChange();
           showToast('All final chip stacks cleared', '🔄');
@@ -2386,6 +2672,7 @@
         confirmText: 'Clear Logbook',
         onConfirm: () => {
           window.tableState.buyinHistory = [];
+          window.tableState.historyClearedAt = Date.now();
           broadcastStateChange();
           showToast("Logbook cleared", "🗑️");
         }
@@ -2482,6 +2769,7 @@
         }
       }
 
+      touchPlayer(p);
       syncAllTimeRecordsFromCurrent();
       broadcastStateChange();
     };
@@ -2496,9 +2784,12 @@
         icon: '🗑️',
         confirmText: 'Remove Player',
         onConfirm: () => {
+          if (!window.tableState.removedPlayers) window.tableState.removedPlayers = {};
+          window.tableState.removedPlayers[playerId] = Date.now();
           window.tableState.players = window.tableState.players.filter(x => x.id !== playerId);
           if (window.tableState.rakeCollector === playerId) {
             window.tableState.rakeCollector = 'HOUSE';
+            touchSettings();
           }
           if (claimedPlayerId === playerId) {
             claimedPlayerId = null;
@@ -2600,14 +2891,20 @@
         confirmStyle: 'emerald',
         onConfirm: () => {
           syncAllTimeRecordsFromCurrent();
+          const now = Date.now();
+          window.tableState.sessionEpoch = (window.tableState.sessionEpoch || 1) + 1;
+          window.tableState.historyClearedAt = now;
+          window.tableState.removedPlayers = {};
           window.tableState.allTimeRecords.totalSessions = (window.tableState.allTimeRecords.totalSessions || 0) + 1;
+          window.tableState.recordsUpdatedAt = now;
 
           window.tableState.players = window.tableState.players.map(p => ({
             ...p,
             buyins: [window.tableState.defaultBuyin || 20],
             cashout: 0,
             hasCashedOut: false,
-            chipCounts: { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 }
+            chipCounts: { brown: 0, blue: 0, green: 0, yellow: 0, black: 0 },
+            updatedAt: now
           }));
 
           window.tableState.buyinHistory = [];
@@ -2635,6 +2932,7 @@
             biggestLoss: { amount: 0, date: '' },
             totalSessions: 0
           };
+          window.tableState.recordsUpdatedAt = Date.now();
           broadcastStateChange();
           renderRecordsTab();
           showToast("Historical records reset to zero", "🔄");
@@ -2784,6 +3082,7 @@
       p.chipCounts = { ...activeChipCounts };
       p.hasCashedOut = true;
       p.cashout = total;
+      touchPlayer(p);
 
       if (!prevHasCashedOut || Math.abs(prevCashout - total) > 0.001) {
         if (total === 0) {
@@ -3016,6 +3315,7 @@
         if (p && !isNaN(val) && val > 0) {
           const wasBusted = p.hasCashedOut && (parseFloat(p.cashout) || 0) === 0;
           p.buyins.push(val);
+          touchPlayer(p);
           const totalBuy = p.buyins.reduce((a, b) => a + (parseFloat(b) || 0), 0);
 
           if (wasBusted) {
@@ -3063,6 +3363,7 @@
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && val > 0) {
           window.tableState.defaultBuyin = val;
+          touchSettings();
           broadcastStateChange();
         }
       });
@@ -3070,6 +3371,7 @@
       const rakeToggle = document.getElementById('rakeToggle');
       rakeToggle.addEventListener('change', (e) => {
         window.tableState.rakeEnabled = e.target.checked;
+        touchSettings();
         broadcastStateChange();
         showToast(window.tableState.rakeEnabled ? "House Rake enabled" : "Rake disabled", "🏦");
       });
@@ -3078,12 +3380,14 @@
       rakeInput.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         window.tableState.rakePerPerson = isNaN(val) ? 0 : val;
+        touchSettings();
         broadcastStateChange();
       });
 
       const collectorSelect = document.getElementById('rakeCollectorSelect');
       collectorSelect.addEventListener('change', (e) => {
         window.tableState.rakeCollector = e.target.value;
+        touchSettings();
         broadcastStateChange();
       });
 
@@ -3120,6 +3424,7 @@
             const oldName = existing.name;
             existing.name = name;
             existing.color = selectedColor;
+            touchPlayer(existing);
 
             if (Array.isArray(window.tableState.buyinHistory)) {
               window.tableState.buyinHistory.forEach(h => {
@@ -3136,12 +3441,13 @@
         } else {
           const buyin = parseFloat(document.getElementById('modalInitialBuyin').value) || 20;
           const newPlayer = {
-            id: Date.now().toString(),
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
             name: name,
             color: selectedColor,
             buyins: [buyin],
             cashout: 0,
-            hasCashedOut: false
+            hasCashedOut: false,
+            updatedAt: Date.now()
           };
           window.tableState.players.push(newPlayer);
           logBuyinEvent(name, buyin, 'INITIAL', buyin);
@@ -3162,6 +3468,7 @@
           amount: parseFloat(document.getElementById('hofInputLossAmt').value) || 0,
           date: document.getElementById('hofInputLossDate').value.trim()
         };
+        window.tableState.recordsUpdatedAt = Date.now();
 
         broadcastStateChange();
         renderRecordsTab();
