@@ -851,8 +851,12 @@
     let pollInterval = null;
     let sseReconnectTimeout = null;
     let pendingBroadcastTimeout = null;
+    let isBroadcasting = false;
+    let broadcastRetryCount = 0;
+    let broadcastRetryTimeout = null;
     let hasUnsentLocalChanges = false;
     let isFetchingHistory = false;
+    let lastNetworkActivity = Date.now();
 
     // Application state with the 5 regular players: Maarten, Lucas, Matthieu, JJ, and Nick
     window.tableState = {
@@ -1346,9 +1350,11 @@
         if (typeof EventSource !== 'undefined') {
           eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
           eventSource.onopen = () => {
+            lastNetworkActivity = Date.now();
             setSyncStatus(true, "Live Synced (Multi-Device)");
           };
           eventSource.onmessage = (event) => {
+            lastNetworkActivity = Date.now();
             try {
               const data = JSON.parse(event.data);
               if (data && data.message && data.message.startsWith('{')) {
@@ -1360,9 +1366,10 @@
           eventSource.onerror = () => {
             try { eventSource.close(); } catch (e) {}
             eventSource = null;
+            const delay = Math.min(10000, 2000 + (Math.random() * 2000));
             sseReconnectTimeout = setTimeout(() => {
               connectEventSource();
-            }, 6000);
+            }, delay);
           };
         }
       } catch (e) {}
@@ -1374,7 +1381,7 @@
       await pullRecentRoomHistory('12h');
       connectEventSource();
       if (hasUnsentLocalChanges) {
-        await flushPendingBroadcast();
+        scheduleBroadcast(true);
       }
       if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
       if (showFeedback) {
@@ -1435,52 +1442,86 @@
 
     function startHttpPolling() {
       if (pollInterval) clearInterval(pollInterval);
-      // Always run a lightweight 6-second catch-up poll so phones that silently drop SSE never get stuck
+      // Lightweight 7-second heartbeat that also watches for dead SSE streams
       pollInterval = setInterval(() => {
         if (document.visibilityState === 'hidden') return;
-        pullRecentRoomHistory('20s');
-      }, 6000);
+        const now = Date.now();
+        // If no message or event received in 25s, restart the SSE stream
+        if (now - lastNetworkActivity > 25000) {
+          connectEventSource();
+        }
+        pullRecentRoomHistory('30s');
+      }, 7000);
     }
 
     async function flushPendingBroadcast() {
+      if (isBroadcasting) return;
+      isBroadcasting = true;
+
       const topic = getNtfyTopic();
       try {
-        // Pull very recent messages (last 10s) right before pushing so we never overwrite a simultaneous edit
-        const resCheck = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=10s`, { cache: 'no-store' });
-        if (resCheck.ok) {
-          const text = await resCheck.text();
-          if (text) {
-            text.trim().split('\n').forEach(line => {
-              try {
-                const obj = JSON.parse(line);
-                if (obj && obj.message && obj.message.startsWith('{')) {
-                  applyRemoteState(JSON.parse(obj.message));
-                }
-              } catch (e) {}
-            });
-          }
-        }
-      } catch (e) {}
-
-      try {
+        const payload = JSON.stringify(window.tableState);
         const resPost = await fetch(`https://ntfy.sh/${topic}`, {
           method: 'POST',
           headers: {
             'Title': `Poker Table ${activeRoomCode}`,
             'Tags': 'poker'
           },
-          body: JSON.stringify(window.tableState)
+          body: payload
         });
+
         if (resPost.ok) {
           hasUnsentLocalChanges = false;
+          broadcastRetryCount = 0;
+          lastNetworkActivity = Date.now();
           setSyncStatus(true, "Live Synced (Multi-Device)");
+        } else if (resPost.status === 429) {
+          // Rate-limited: back off exponentially and re-queue without dropping the state
+          hasUnsentLocalChanges = true;
+          broadcastRetryCount++;
+          const backoff = Math.min(12000, 1000 * Math.pow(1.6, broadcastRetryCount) + Math.random() * 500);
+          setSyncStatus(false, `Rate limited; retrying in ${(backoff/1000).toFixed(1)}s...`);
+          if (broadcastRetryTimeout) clearTimeout(broadcastRetryTimeout);
+          broadcastRetryTimeout = setTimeout(() => {
+            scheduleBroadcast(true);
+          }, backoff);
         } else {
           hasUnsentLocalChanges = true;
           setSyncStatus(false, "Sync Queued (Retrying...)");
+          scheduleBroadcastRetry();
         }
       } catch (err) {
         hasUnsentLocalChanges = true;
         setSyncStatus(false, "Local Mode (Auto-Retry Ready)");
+        scheduleBroadcastRetry();
+      } finally {
+        isBroadcasting = false;
+      }
+    }
+
+    function scheduleBroadcastRetry() {
+      if (broadcastRetryTimeout) return;
+      broadcastRetryCount++;
+      const delay = Math.min(10000, 1500 * broadcastRetryCount);
+      broadcastRetryTimeout = setTimeout(() => {
+        broadcastRetryTimeout = null;
+        flushPendingBroadcast();
+      }, delay);
+    }
+
+    function scheduleBroadcast(immediate = false) {
+      if (pendingBroadcastTimeout) {
+        clearTimeout(pendingBroadcastTimeout);
+        pendingBroadcastTimeout = null;
+      }
+      if (immediate) {
+        flushPendingBroadcast();
+      } else {
+        // 350ms consolidation window bundles rapid taps into a single clean transmission
+        pendingBroadcastTimeout = setTimeout(() => {
+          pendingBroadcastTimeout = null;
+          flushPendingBroadcast();
+        }, 350);
       }
     }
 
@@ -1498,12 +1539,7 @@
         } catch (e) {}
       }
 
-      if (pendingBroadcastTimeout) {
-        clearTimeout(pendingBroadcastTimeout);
-      }
-      pendingBroadcastTimeout = setTimeout(() => {
-        flushPendingBroadcast();
-      }, 120);
+      scheduleBroadcast(false);
     }
 
     function calculateTotals() {
