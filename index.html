@@ -846,6 +846,13 @@
     const deviceClientId = localStorage.getItem('poker_device_id') || ('dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7));
     try { localStorage.setItem('poker_device_id', deviceClientId); } catch (e) {}
 
+    // Gateway endpoints for resilience (ntfy primary + fallback relays)
+    const SYNC_GATEWAYS = [
+      'https://ntfy.sh',
+      'https://ntfy.rocks'
+    ];
+    let currentGatewayIndex = 0;
+
     let localChannel = null;
     let eventSource = null;
     let pollInterval = null;
@@ -858,6 +865,7 @@
     let lastSyncedGeneration = 0;
     let isFetchingHistory = false;
     let lastNetworkActivity = Date.now();
+    let consecutiveNetworkErrors = 0;
 
     // Application state with the 5 regular players: Maarten, Lucas, Matthieu, JJ, and Nick
     window.tableState = {
@@ -1327,6 +1335,14 @@
       return `poker_table_${activeRoomCode.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`;
     }
 
+    function getCurrentGateway() {
+      return SYNC_GATEWAYS[currentGatewayIndex % SYNC_GATEWAYS.length];
+    }
+
+    function rotateGateway() {
+      currentGatewayIndex = (currentGatewayIndex + 1) % SYNC_GATEWAYS.length;
+    }
+
     async function extractAndApplyNtfyEvent(obj) {
       if (!obj) return;
       try {
@@ -1347,9 +1363,12 @@
       if (isFetchingHistory) return;
       isFetchingHistory = true;
       const topic = getNtfyTopic();
+      const gateway = getCurrentGateway();
       try {
-        const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=${sinceWindow}`, { cache: 'no-store' });
+        const res = await fetch(`${gateway}/${topic}/json?poll=1&since=${sinceWindow}`, { cache: 'no-store' });
         if (res.ok) {
+          consecutiveNetworkErrors = 0;
+          lastNetworkActivity = Date.now();
           const text = await res.text();
           if (text) {
             const lines = text.trim().split('\n');
@@ -1365,9 +1384,16 @@
           if (localChangeGeneration > lastSyncedGeneration) {
             flushPendingBroadcast();
           }
+        } else if (res.status === 429) {
+          // If rate limited, rotate gateway on next attempt
+          rotateGateway();
         }
       } catch (e) {
-        setSyncStatus(false, "Local Mode (Offline Safe)");
+        consecutiveNetworkErrors++;
+        // Only show offline if consecutive failures persist and SSE is inactive
+        if (consecutiveNetworkErrors >= 3 && (!eventSource || eventSource.readyState !== 1)) {
+          setSyncStatus(false, "Local Mode (Auto-Reconnecting)");
+        }
       } finally {
         isFetchingHistory = false;
       }
@@ -1375,6 +1401,7 @@
 
     function connectEventSource() {
       const topic = getNtfyTopic();
+      const gateway = getCurrentGateway();
       if (eventSource) {
         try { eventSource.close(); } catch (e) {}
         eventSource = null;
@@ -1386,13 +1413,15 @@
 
       try {
         if (typeof EventSource !== 'undefined') {
-          eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+          eventSource = new EventSource(`${gateway}/${topic}/sse`);
           eventSource.onopen = () => {
+            consecutiveNetworkErrors = 0;
             lastNetworkActivity = Date.now();
             setSyncStatus(true, "Live Synced (Multi-Device)");
           };
           eventSource.onmessage = (event) => {
             lastNetworkActivity = Date.now();
+            consecutiveNetworkErrors = 0;
             try {
               const data = JSON.parse(event.data);
               extractAndApplyNtfyEvent(data);
@@ -1401,7 +1430,9 @@
           eventSource.onerror = () => {
             try { eventSource.close(); } catch (e) {}
             eventSource = null;
-            const delay = Math.min(10000, 2000 + (Math.random() * 2000));
+            consecutiveNetworkErrors++;
+            rotateGateway();
+            const delay = Math.min(8000, 1500 + (Math.random() * 2000));
             sseReconnectTimeout = setTimeout(() => {
               connectEventSource();
             }, delay);
@@ -1413,14 +1444,15 @@
     window.forceSyncNow = async function(showFeedback = false) {
       const icon = document.getElementById('forceSyncIcon');
       if (icon) icon.classList.add('animate-spin');
-      await pullRecentRoomHistory('12h');
+      consecutiveNetworkErrors = 0;
       connectEventSource();
+      await pullRecentRoomHistory('12h');
       // Always push this device's merged state on manual Sync so all devices converge
       localChangeGeneration++;
       await flushPendingBroadcast();
       if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
       if (showFeedback) {
-        showToast("Synced & reconciled with all devices!", "🔄");
+        showToast("Synced & reconnected with all devices!", "🔄");
       }
     };
 
@@ -1467,9 +1499,13 @@
 
       window.addEventListener('focus', () => {
         pullRecentRoomHistory('10m');
+        if (!eventSource || eventSource.readyState === 2) {
+          connectEventSource();
+        }
       });
 
       window.addEventListener('online', () => {
+        consecutiveNetworkErrors = 0;
         pullRecentRoomHistory('1h');
         connectEventSource();
       });
@@ -1477,16 +1513,19 @@
 
     function startHttpPolling() {
       if (pollInterval) clearInterval(pollInterval);
-      // Lightweight 7-second heartbeat that also watches for dead SSE streams
+      // Lightweight watchdog that only polls if SSE stream is quiet
       pollInterval = setInterval(() => {
         if (document.visibilityState === 'hidden') return;
         const now = Date.now();
-        // If no message or event received in 25s, restart the SSE stream
-        if (now - lastNetworkActivity > 25000) {
+        // If no message or event received in 20s, reconnect SSE and pull
+        if (now - lastNetworkActivity > 20000) {
           connectEventSource();
+          pullRecentRoomHistory('45s');
+        } else if (now - lastNetworkActivity > 10000) {
+          // Subtle background catch-up
+          pullRecentRoomHistory('20s');
         }
-        pullRecentRoomHistory('30s');
-      }, 7000);
+      }, 8000);
     }
 
     async function flushPendingBroadcast() {
@@ -1498,8 +1537,9 @@
       const generationBeingSent = localChangeGeneration;
 
       const topic = getNtfyTopic();
+      const gateway = getCurrentGateway();
       try {
-        // Keep wire payload under 4,096 bytes so ntfy.sh always delivers inline JSON
+        // Keep wire payload under 4,096 bytes so ntfy always delivers inline JSON
         const wireState = {
           ...window.tableState,
           buyinHistory: (window.tableState.buyinHistory || []).slice(0, 55)
@@ -1507,7 +1547,7 @@
         const payload = JSON.stringify(wireState);
 
         // Plain POST without custom headers avoids CORS OPTIONS preflight requests
-        const resPost = await fetch(`https://ntfy.sh/${topic}`, {
+        const resPost = await fetch(`${gateway}/${topic}`, {
           method: 'POST',
           body: payload
         });
@@ -1515,24 +1555,26 @@
         if (resPost.ok) {
           lastSyncedGeneration = Math.max(lastSyncedGeneration, generationBeingSent);
           broadcastRetryCount = 0;
+          consecutiveNetworkErrors = 0;
           lastNetworkActivity = Date.now();
           setSyncStatus(true, "Live Synced (Multi-Device)");
         } else if (resPost.status === 429) {
-          // Rate-limited: back off exponentially and re-queue without dropping the state
+          // Rate-limited: rotate gateway and back off with jitter
+          rotateGateway();
           broadcastRetryCount++;
-          const backoff = Math.min(10000, 1000 * Math.pow(1.5, broadcastRetryCount) + Math.random() * 400);
-          setSyncStatus(false, `Syncing (${(backoff/1000).toFixed(1)}s)...`);
+          const backoff = Math.min(8000, 800 * Math.pow(1.4, broadcastRetryCount) + Math.random() * 300);
+          setSyncStatus(false, `Re-syncing (${(backoff/1000).toFixed(1)}s)...`);
           if (broadcastRetryTimeout) clearTimeout(broadcastRetryTimeout);
           broadcastRetryTimeout = setTimeout(() => {
             broadcastRetryTimeout = null;
             scheduleBroadcast(true);
           }, backoff);
         } else {
-          setSyncStatus(false, "Sync Queued (Retrying...)");
           scheduleBroadcastRetry();
         }
       } catch (err) {
-        setSyncStatus(false, "Local Mode (Auto-Retry Ready)");
+        consecutiveNetworkErrors++;
+        rotateGateway();
         scheduleBroadcastRetry();
       } finally {
         isBroadcasting = false;
